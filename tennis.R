@@ -1,356 +1,191 @@
 # tennis code
 rm(list=ls())
 
-require(tidyverse)
-require(lubridate)
-require(ggplot2)
+require(dplyr,lubridate,ggplot2)
+library(dplyr,lubridate,ggplot2)
 
-play.point <- function(serving, serve_pct) {
+# define play.match
+play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct,arg.match.p2.serve.pct) {
+  # set initial values
+  match.over <- FALSE
+  current.server <- arg.match.first.server
+  current.server.pct <- ifelse(arg.match.first.server == 'P1', arg.match.p1.serve.pct, arg.match.p2.serve.pct)
+  p1.sets <- 0
+  p2.sets <- 0
+  set.winner <- ''
+  # play sets until the match is over
+  while(match.over == FALSE) {
+    set.winner <- play.set(arg.set.first.server = current.server, arg.set.p1.serve.pct = arg.match.p1.serve.pct, arg.set.p2.serve.pct = arg.match.p2.serve.pct)
+    # increment the set winner's count
+    if (set.winner == 'P1') {
+      p1.sets <- p1.sets + 1
+    } else {
+      p2.sets <- p2.sets + 1
+    }
+    # check if match is over
+    if (p1.sets == ceiling(arg.best.of/2) | p2.sets == ceiling(arg.best.of/2)) {
+      match.over <- TRUE
+    }
+  }
+  # determine winner
+  if (p1.sets > p2.sets) {
+    match.winner <- 'P1'
+  } else {
+    match.winner <- 'P2'
+  }
+  return(match.winner)
+}
+
+# define play.set
+play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.pct) {
+  # initial values
+  set.over <- FALSE
+  p1.games <- 0
+  p2.games <- 0
+  tiebreak <- FALSE
+  current.server <- arg.set.first.server
+  server.before.tiebreak <- current.server
+  # play games until the set is over
+  while(set.over == FALSE) {
+    # play a game
+    game.winner <- play.game(arg.game.server = current.server, arg.game.serve.pct = ifelse(current.server == 'P1', arg.set.p1.serve.pct, arg.set.p2.serve.pct))
+    # award winner a game
+    if (game.winner == 'P1') {
+      p1.games <- p1.games + 1
+    } else {
+      p2.games <- p2.games + 1
+    }
+    # swap server
+    current.server = ifelse(current.server == 'P1','P2','P1')
+    # check if tiebreak needed
+    if (p1.games == 6 & p2.games == 6) {
+      tiebreak <- TRUE
+    }
+    if(tiebreak==TRUE) {
+      game.winner <- play.tiebreak(arg.tiebreak.first.server = current.server, arg.tiebreak.p1.serve.pct = arg.set.p1.serve.pct, arg.tiebreak.p2.serve.pct = arg.set.p2.serve.pct)
+    }
+    # check if set is over
+    if((p1.games == 6 & p2.games <= 4) | (p2.games == 6 & p1.games <= 4) | p1.games == 7 | p2.games == 7) {
+      set.over <- TRUE
+    }
+  }
+  if (p1.games > p2.games) {
+    set.winner <- 'P1'
+  } else {
+    set.winner <- 'P2'
+  }
+  return(set.winner)
+}
+
+# define play.game
+play.game <- function(arg.game.server, arg.game.serve.pct) {
+  # initial values
+  p1.points <- 0
+  p2.points <- 0
+  game.over <- FALSE
+  # play points until the game is over
+  while(game.over == FALSE) {
+    # play a point
+    point.winner <- play.point(arg.point.server = arg.game.server, arg.point.serve.pct = arg.game.serve.pct)
+    # increment points of the winner of the point just played
+    if (point.winner == 'P1') {
+      p1.points <- p1.points + 1
+    } else {
+      p2.points <- p2.points + 1
+    }
+    if (p1.points == 5 & p2.points == 5) {
+      p1.points <- 3
+      p2.points <- 3
+    }
+    # check if the game is over
+    if ((p1.points >= 4 | p2.points >= 4) &
+        (abs(p1.points - p2.points) >= 2)) {
+      game.over <- TRUE
+    }
+  }
+  if (p1.points > p2.points) {
+    game.winner <- 'P1'
+  } else {
+    game.winner <- 'P2'
+  }
+  return(game.winner)
+}
+
+# define play.point
+play.point <- function(arg.point.server, arg.point.serve.pct) {
   # generate random number
   random.number <- runif(1)
   # determine winner of point
-  if (serve_pct > random.number) { #server wins point
-    if (serving == "P1") {
-      point.winner <<- "P1"
-      return("P1")
-    } else if (serving == "P2") {
-      point.winner <<- "P2"
-      return("P2")
+  if (arg.point.serve.pct > random.number) {
+    if (arg.point.server == 'P1') {
+      return('P1')
+    } else if (arg.point.server == 'P2') {
+      return('P2')
     }
-  } else { # server loses point
-    if (serving == "P1") {
-      point.winner <<- "P2"
-      return("P2")
-    } else if (serving == "P2") {
-      point.winner <<- "P1"
-      return("P1")
+  } else {
+    if (arg.point.server == 'P1') {
+      return('P2')
+    } else if (arg.point.server == 'P2') {
+      return('P1')
     }
   }
 }
 
-# default starting value for variables
-best.of <- 0
-game.over <- 0
-set.over <- 0
-match.over <- 0
-tiebreak.over <- 0
-points.played <- 0
-p1.serve.pct <- 0.8
-p2.serve.pct <- 0.8
-current.server <- 'P1'
-current.server.pct <- ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct)
-server.before.tiebreak <- ''
-p1.points <- 0
-p2.points <- 0
-p1.games <- 0
-p2.games <- 0
-p1.sets <- 0
-p2.sets <- 0
-point.score <- ''
-game.score <- ''
-set.score <- ''
-point.winner <- ''
-game.winner <- ''
-set.winner <- ''
-match.winner <- ''
-tiebreak <- 0
-scoreboard <- data.frame(
-  point = numeric(),
-  server = character(),
-  winner = character(),
-  p1_points = numeric(),
-  p2_points = numeric(),
-  p1_games = numeric(),
-  p2_games = numeric(),
-  point_score = character(),
-  game_score = character(),
-  set_score = character()
-)
-
-play.game <- function(game_server,game_serve_pct) {
-  while(game.over != 1) {
-    play.point(serving = game_server , serve_pct = game_serve_pct)
-    update.score()
-    check.game.over()
-  }
-  if (game.over == 1) {
-    # clear up the points for the next game to be played
-    game.over <<- 0
-    p1.points <<- 0
-    p2.points <<- 0
-    # update scoreboard to reflect game winner
-    scoreboard[points.played,'p1_games'] <<- p1.games
-    scoreboard[points.played,'p2_games'] <<- p2.games
-    # swap the server over
-    if (current.server == 'P1') {
-      current.server <<- 'P2'
-      current.server.pct <<- p2.serve.pct
-    } else {
-      current.server <<- 'P1'
-      current.server.pct <<- p1.serve.pct
-    }
-    return(game.winner)
-  }
-}
-
-play.tiebreak <- function() {
-  # track who served in the last game before the tiebreak
-  server.before.tiebreak <<- scoreboard[points.played,"server"]
+play.tiebreak <- function(arg.tiebreak.first.server,arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct) {
+  # initial values
+  tiebreak.over <- FALSE
+  tiebreak.current.server <- arg.tiebreak.first.server
+  p1.points <- 0
+  p2.points <- 0
   # play the first point of the tiebreak
-  play.point(serving = current.server , serve_pct = ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct))
-  update.score()
-  if (current.server == 'P1') {
-    current.server <<- 'P2'
-    current.server.pct <<- p2.serve.pct
-  } else if (current.server == 'P2') {
-    current.server <<- 'P1'
-    current.server.pct <<- p1.serve.pct
+  point.winner <- play.point(arg.point.server = tiebreak.current.server, arg.point.serve.pct = ifelse(tiebreak.current.server == 'P1',arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct))
+  # award point to the winner
+  if (point.winner == 'P1') {
+    p1.points <- 1
+  } else {
+    p2.points <- 1
   }
-  # play the remaining points of the tiebreak
-  while(tiebreak.over != 1) {
-    # first point
-    play.point(serving = current.server , serve_pct = ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct))
-    update.score()
-    check.tiebreak.over()
-    # second point
-    if (tiebreak.over == 1) {
+  # play the remainder of the tiebreak
+  while(tiebreak.over == FALSE) {
+    # swap server
+    tiebreak.current.server <- ifelse(tiebreak.current.server == 'P1','P2','P1')
+    # play the first point on this player's server
+    point.winner <- play.point(arg.point.server = tiebreak.current.server, arg.point.serve.pct = ifelse(tiebreak.current.server == 'P1',arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct))
+    # award point to the winner
+    if (point.winner == 'P1') {
+      p1.points <- p1.points + 1
+    } else {
+      p2.points <- p2.points + 1
+    }
+    # check if tiebreak should be ended
+    if ((p1.points >= 7 | p2.points >= 7) & (abs(p1.points - p2.points) > 1)) {
+      tiebreak.over <- TRUE
       break
     }
-    play.point(serving = current.server , serve_pct = ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct))
-    update.score()
-    check.tiebreak.over()
-    # swap server
-    if (current.server == 'P1') {
-      current.server <<- 'P2'
-      current.server.pct <<- p2.serve.pct
-    } else if (current.server == 'P2') {
-      current.server <<- 'P1'
-      current.server.pct <<- p1.serve.pct
-    }
-  }
-  if (tiebreak.over == 1) {
-    # clear up the points for the next game to be played
-    tiebreak <<- 0
-    p1.points <<- 0
-    p2.points <<- 0
-    # update scoreboard to reflect game winner
-    scoreboard[points.played,'p1_games'] <<- p1.games
-    scoreboard[points.played,'p2_games'] <<- p2.games
-    # special code to update the game score
-    scoreboard[points.played,'game_score'] <<- paste0(p1.games,'-',p2.games)
-    # server after a tiebreak is based on who served in the 12th game of the set
-    current.server <<- server.before.tiebreak
-    current.server.pct <<- ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct)
-  }
-}
-
-check.tiebreak.over <- function() {
-  if ((p1.points >= 7 | p2.points >= 7) &
-      (abs(p1.points - p2.points) >= 2)) {
-    if (p1.points > p2.points) {
-      game.winner <<- "P1"
-      p1.games <<- p1.games + 1
-    } else{
-      game.winner <<- "P2"
-      p2.games <<- p2.games + 1
-    }
-    tiebreak.over <<- 1
-  }
-}
-
-reset.values <- function() {
-  scoreboard <<- scoreboard[0,]
-  game.over <<- 0
-  set.over <<- 0
-  match.over <<- 0
-  tiebreak.over <<- 0
-  points.played <<- 0
-  p1.points <<- 0
-  p2.points <<- 0
-  p1.games <<- 0
-  p2.games <<- 0
-  p1.sets <<- 0
-  p2.sets <<- 0
-  tiebreak <<- 0
-  point.winner <<- ''
-  game.winner <<- ''
-  set.winner <<- ''
-  match.winner <<- ''
-  point.score <<- ''
-  game.score <<- ''
-  set.score <<- ''
-}
-
-check.game.over <- function() {
-  if ((p1.points >= 4 | p2.points >= 4) &
-      (abs(p1.points - p2.points) >= 2)) {
-    if (p1.points > p2.points) {
-      game.winner <<- "P1"
-      p1.games <<- p1.games + 1
-    } else{
-      game.winner <<- "P2"
-      p2.games <<- p2.games + 1
-    }
-    game.over <<- 1
-  }
-}
-
-create.score <- function() {
-  if (p1.points == 0) {
-    point.score <<- ifelse(current.server == 'P1', 
-                           switch(p2.points + 1,'0-0','0-15','0-30','0-40','Game P2'),
-                           switch(p2.points + 1,'0-0','15-0','30-0','40-0','Game P2')
-    )
-  } else if (p1.points == 1) {
-    point.score <<- ifelse(current.server == 'P1',
-                           switch(p2.points + 1,'15-0','15-15','15-30','15-40','Game P2'),
-                           switch(p2.points + 1,'0-15','15-15','30-15','40-15','Game P2')
-    )
-  } else if (p1.points == 2) {
-    point.score <<- ifelse(current.server == 'P1',
-                           switch(p2.points + 1,'30-0','30-15','30-30','30-40','Game P2'),
-                           switch(p2.points + 1, '0-30','15-30','30-30','40-30','Game P2')
-    )
-  } else if (p1.points == 3) {
-    point.score <<- ifelse(current.server == 'P1',
-                           switch(p2.points + 1, '40-0','40-15','40-30','40-40','40-Ad','Game P2'),
-                           switch(p2.points + 1, '0-40','15-40','30-40','40-40','Ad-40','Game P2')
-    )
-  } else if (p1.points == 4) {
-    point.score <<- ifelse(current.server == 'P1',
-                           switch(p2.points + 1, 'Game P1','Game P1','Game P1','Ad-40','40-40','40-Ad','Game P2'),
-                           switch(p2.points + 1, 'Game P1','Game P1','Game P1','40-Ad','40-40','Ad-40','Game P2')
-    )
-  } else if (p1.points == 5) {
-    point.score <<- ifelse(current.server == 'P1',
-                           switch(p2.points + 1,'error','error','error','Game P1','Ad-40'),
-                           switch(p2.points + 1,'error','error','error','Game P1','40-Ad')
-    ) 
-  } else if (p1.points == 6) {
-    point.score <<- ifelse(current.server == 'P1',
-                           switch(p2.points + 1,'error','error','error','error','Game P1'),
-                           switch(p2.points + 1,'error','error','error','error','Game P1')
-    )
-  }
-}
-
-update.score <- function() {
-  points.played <<- points.played + 1
-  p1.points <<- ifelse(point.winner == "P1", p1.points + 1, p1.points)
-  p2.points <<- ifelse(point.winner == "P2", p2.points + 1, p2.points)
-  # after the score gets to 5-5, we reset it back to 4-4
-  if (tiebreak == 0) {
-    if (p1.points == 5 & p2.points == 5) {
-      p1.points <<- 3
-      p2.points <<- 3
-    }
-    create.score()
-  } else {
-    point.score <<- ifelse(current.server == 'P1',
-                           paste0(p1.points,'-',p2.points),
-                           paste0(p2.points,'-',p1.points)
-    )
-  }
-  # update the scoreboard
-  scoreboard <<- rbind(
-    scoreboard,
-    list(
-      point = points.played,
-      server = current.server,
-      winner = point.winner,
-      p1_points = p1.points,
-      p2_points = p2.points,
-      point_score = point.score,
-      p1_games = p1.games,
-      p2_games = p2.games,
-      game_score = paste0(p1.games,'-',p2.games),
-      p1_sets = p1.sets,
-      p2_sets = p2.sets,
-      set_score = paste0(p1.sets,'-',p2.sets)
-    )
-  )
-}
-
-# play a game
-#reset.values()
-#play.game(game_server = "P1" , game_serve_pct = 0.7)
-
-play.set <- function(set_first_server) {
-  # assign the first server
-  current.server <<- set_first_server
-  current.server.pct <<- ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct)
-  while(set.over != 1) {
-    if (tiebreak == 0) {
-      play.game(game_server = current.server , game_serve_pct = current.server.pct)
+    # play the second point on this player's server
+    point.winner <- play.point(arg.point.server = tiebreak.current.server, arg.point.serve.pct = ifelse(tiebreak.current.server == 'P1',arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct))
+    # award point to the winner
+    if (point.winner == 'P1') {
+      p1.points <- p1.points + 1
     } else {
-      play.tiebreak()
+      p2.points <- p2.points + 1
     }
-    check.set.over()
+    # check if tiebreak should be ended
+    if ((p1.points >= 7 | p2.points >= 7) & (abs(p1.points - p2.points) > 1)) {
+      tiebreak.over <- TRUE
+      break
+    }
   }
-  if (set.over == 1) {
-    set.over <<- 0
-    p1.games <<- 0
-    p2.games <<- 0
-    tiebreak.over <<- 0
-    # update scoreboard to reflect set winner
-    scoreboard[points.played,'p1_sets'] <<- p1.sets
-    scoreboard[points.played,'p2_sets'] <<- p2.sets
-    return(set.winner)
+  # determine who wins the tiebreak
+  if (p1.points > p2.points) {
+    tiebreak.winner <- 'P1'
+  } else {
+    tiebreak.winner <- 'P2'
   }
+  # return the winner of the tiebreak
+  return(tiebreak.winner)
 }
 
-check.set.over <- function() {
-  # check if set is over
-  if ((p1.games == 6 & p2.games < 5) | (p1.games == 7)) {
-    set.winner <<- 'P1'
-    p1.sets <<- p1.sets + 1
-    set.over <<- 1
-    scoreboard[points.played,'p1_sets'] <<- p1.sets
-  } else if ((p2.games == 6 & p1.games < 5) | (p2.games == 7)) {
-    set.winner <<- 'P2'
-    p2.sets <<- p2.sets + 1
-    set.over <<- 1
-    scoreboard[points.played,'p2_sets'] <<- p2.sets
-  }
-  # check if tiebreak is needed
-  if (p1.games == 6 & p2.games == 6) {
-    tiebreak <<- 1
-  }
-}
-
-# play a single set
-#reset.values()
-#play.set(set_first_server = 'P1')
-
-play.match <- function(match_first_server, best_of = 3) {
-  best.of <<- best_of
-  # assign the first player who will serve
-  current.server <<- match_first_server
-  current.server.pct <<- ifelse(current.server == 'P1',p1.serve.pct,p2.serve.pct)
-  # play the first set
-  play.set(set_first_server = current.server)
-  # play the remaining sets
-  while(match.over != 1) {
-    play.set(set_first_server = current.server)
-    check.match.over()
-  }
-  if (match.over == 1) {
-    return(match.winner)
-  }
-}
-
-check.match.over <- function() {
-  if (p1.sets == ceiling(best.of/2)) {
-    match.winner <<- 'P1'
-    match.over <<- 1
-  } else if (p2.sets == ceiling(best.of/2)) {
-    match.winner <<- 'P2'
-    match.over <<- 1
-  }
-}
-
-# play a match
-reset.values()
-play.match(match_first_server = 'P1',best_of = 3)
+play.match(arg.best.of = 3, arg.match.first.server = 'P1', arg.match.p1.serve.pct = 0.6, arg.match.p2.serve.pct = 0.8)
 
 
