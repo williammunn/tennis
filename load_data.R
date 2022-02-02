@@ -36,6 +36,12 @@ seed.vars <- c(
   'loser_seed',
   'round'
 )
+player.vars <- c(
+  'winner_id',
+  'winner_name',
+  'loser_id',
+  'loser_name'
+)
 
 # prepare the match data, which is simply a subet (source Data is already one row per match)
 match.data <- Data[,match.vars]
@@ -54,4 +60,17 @@ seedings.data2 <- union(
 seedings.data <- seedings.data2
 rm(seedings.data2,files,match.vars,seed.vars,tourney.vars)
 
+# prepare player data
+player.data <- Data[,player.vars]
+player.data2 <- union(
+  player.data[,c('winner_id','winner_name')] %>% rename(player_id = winner_id, player_name = winner_name),
+  player.data[,c('loser_id','loser_name')] %>% rename(player_id = loser_id, player_name = loser_name) 
+)
+player.data <- player.data2 %>% arrange(player_id)
+rm(player.data2)
+
+# ensure no duplicates in the player data
+qa.1 <- player.data %>% group_by(player_id) %>% summarise(rows = n()) %>% filter(rows > 1)
+qa.2 <- player.data %>% group_by(player_name) %>% summarise(rows = n()) %>% filter(rows > 1)
+rm(qa.1,qa.2)
 

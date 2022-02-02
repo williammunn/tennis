@@ -27,3 +27,5 @@ elo.calculate.points <- function(arg.p1,arg.p2,arg.winner,arg.p1.matches,arg.p2.
   return(list(elo_p1,elo_p2))
 }
 
+# thoughts : order data chronologically, store in a matrix for fast access ? like a temporary array ?
+
