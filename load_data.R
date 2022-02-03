@@ -9,6 +9,8 @@ Data <- do.call("rbind", lapply(files, function(x) read.csv(x, sep=",",stringsAs
 
 # clean data
 Data$tourney_date <- as.Date(as.character(Data$tourney_date),format='%Y%m%d', origin = "1900/01/01")
+Data <- Data %>% mutate(winner_id = as.character(winner_id),
+                        loser_id = as.character(loser_id))
 
 # dictate what variables get assigned to what data
 match.vars <- c(
@@ -67,7 +69,7 @@ player.data2 <- union(
   player.data[,c('loser_id','loser_name')] %>% rename(player_id = loser_id, player_name = loser_name) 
 )
 player.data <- player.data2 %>% arrange(player_id)
-rm(player.data2)
+rm(player.data2,player.vars)
 
 # ensure no duplicates in the player data
 qa.1 <- player.data %>% group_by(player_id) %>% summarise(rows = n()) %>% filter(rows > 1)
