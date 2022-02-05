@@ -73,8 +73,8 @@ for (i in 1:nrow(elo.input.data)) {
     arg.winner = elo.input.data$winner_id[i],
     arg.p1.matches = elo.input.data$winner_prev_matches[i],
     arg.p2.matches = elo.input.data$loser_prev_matches[i],
-    arg.prevelo.p1 = array.elo[elo.input.data$winner_id[i],elo.input.data$winner_prev_matches[1]+1][[1]],
-    arg.prevelo.p2 = array.elo[elo.input.data$loser_id[i],elo.input.data$loser_prev_matches[1]+1][[1]]
+    arg.prevelo.p1 = array.elo[elo.input.data$winner_id[i],elo.input.data$winner_prev_matches[i]+1][[1]],
+    arg.prevelo.p2 = array.elo[elo.input.data$loser_id[i],elo.input.data$loser_prev_matches[i]+1][[1]]
   )
   winner.elo.points <- elo.points[[1]]
   loser.elo.points <- elo.points[[2]]
@@ -82,6 +82,9 @@ for (i in 1:nrow(elo.input.data)) {
   array.elo[elo.input.data$winner_id[i],elo.input.data$winner_prev_matches[i]+2] <- winner.elo.points
   array.elo[elo.input.data$loser_id[i],elo.input.data$loser_prev_matches[i]+2] <- loser.elo.points
 }
+
+# check for highest value
+max(array.elo[which(!is.na(array.elo))])
 
 # array can now be converted into elo rankings
 # we can ignore the NA entries as they don't correspond to a match played
