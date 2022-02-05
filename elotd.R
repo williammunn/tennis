@@ -35,7 +35,7 @@ elo.calculate.points <- function(arg.p1,arg.p2,arg.winner,arg.p1.matches,arg.p2.
 }
 
 # subset of data for matches played in 2019
-elo.input.data <- match.data[year(tourney_date)==2019]
+elo.input.data <- match.data[year(tourney_date)%in%c(2010:2014)]
 
 # the number of rows in the matrix corresponds to the number of unique players
 dim1 <- length(unique(c(elo.input.data[,winner_id],elo.input.data[,loser_id])))
@@ -89,7 +89,7 @@ max(array.elo[which(!is.na(array.elo))])
 # array can now be converted into elo rankings
 # we can ignore the NA entries as they don't correspond to a match played
 
-# pre-allocate data frame having one row per non empty entry in array.elo
+# pre-allocate data table having one row per non empty entry in array.elo
 rows <- length(which(!is.na(array.elo)))
 elo.results <- data.table(
   player_id = character(rows),
@@ -97,6 +97,7 @@ elo.results <- data.table(
   elo_points = numeric(rows)
 )
 
+# load elo points into data
 k <- 1
 for (i in 1:dim(array.elo)[1]) {
   for (j in 1:dim(array.elo)[2]) {
@@ -110,7 +111,27 @@ for (i in 1:dim(array.elo)[1]) {
 }
 rm(i,j,k)
 
+# drop the initial row for each player
+# note: need to ensure each player's final row has todate = na
+eloa <- elo.results[match_number!=0]
+setkey(eloa,player_id,match_number)
+elob <- per.player[,match_number := player_matches+1][,.(tourney_date,id,match_number)][order(id,match_number)]
+setkey(elob,id,match_number)
+elo.results <- eloa[elob, date := i.tourney_date]
+elo.results2 <- elo.results[,.SD[.N], by=.(player_id,date)][
+  order(player_id,-match_number)][
+    ,lagdate := lag(date)][
+      ,`:=`(
+        fromdate=date,
+        todate=lagdate
+      )][
+        ,.(player_id,fromdate,todate,elo_points)
+      ]
+setkey(elo.results2,player_id)
+player.data <- as.data.table(player.data)
+setkey(player.data,player_id)
+elo.results3 <- player.data[elo.results2]
 
-# add in the match date (we're currently using tourney_date)
-# take the last set of elo points for each tournament for each player
-                 
+# tidy
+elo.results <- elo.results3
+rm(array.elo,elo.input.data,elo.points,elo.results2,elo.results3,eloa,elob,per.player,loser.elo.points,winner.elo.points,rows)

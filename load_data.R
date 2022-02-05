@@ -1,6 +1,7 @@
 # prepare tennis match data
 rm(list=ls())
 require(dplyr)
+require(data.table)
 setwd('/Users/vickimunn/Desktop/R Stuff/github/Data/')
 
 # load match data
@@ -54,7 +55,7 @@ tourney.data <- Data[,tourney.vars] %>%
 
 # prepare seedings data
 seedings.data <- Data[,seed.vars]
-seedings.data2 <- union(
+seedings.data2 <- rbind(
   (seedings.data[!is.na(seedings.data$winner_seed),c('tourney_id','winner_id','winner_seed')] %>% rename(player_id = winner_id, seed = winner_seed)),
   (seedings.data[!is.na(seedings.data$loser_seed),c('tourney_id','loser_id','loser_seed')] %>% rename(player_id = loser_id, seed = loser_seed))
 ) %>% distinct() %>% 
@@ -64,10 +65,10 @@ rm(seedings.data2,files,match.vars,seed.vars,tourney.vars)
 
 # prepare player data
 player.data <- Data[,player.vars]
-player.data2 <- union(
+player.data2 <- rbind(
   player.data[,c('winner_id','winner_name')] %>% rename(player_id = winner_id, player_name = winner_name),
   player.data[,c('loser_id','loser_name')] %>% rename(player_id = loser_id, player_name = loser_name) 
-)
+) %>% distinct()
 player.data <- player.data2 %>% arrange(player_id)
 rm(player.data2,player.vars)
 
