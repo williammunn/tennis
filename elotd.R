@@ -85,3 +85,10 @@ results1 <- rbind(
 # take last match per tourney
 results2 <- results1[,.SD[.N],by=.(player_id,tourney_date)]
 # convert to longitudinal data
+results3 <- results2[order(player_id,-tourney_date)][,lagdate:=lag(tourney_date)-1][,key:=1:nrow(results2)]
+rows <- results3[,.SD[1],by=.(player_id)]$key
+elo.history <- results3[rows,lagdate := as.Date("9999-12-31",format="%Y-%m-%d")][,.(player_id,fromdate=tourney_date,todate=lagdate,elo)][order(player_id,fromdate,todate)]
+
+# tidy
+rm(matrix.elo,results1,results2,results3,rows,elos,rownames)
+
