@@ -1,10 +1,12 @@
 rm(list=ls())
-library(dplyr)
-library(lubridate)
+library(lubridate,dplyr,data.table)
 setwd("/Users/vickimunn/Desktop/R stuff/github")
 
-# load tennis data
+# load tennis data, remove what we don't need
 source("load_data.R")
+rm(list=setdiff(ls(),c('Data','match.data')))
+lapply(list(Data,match.data),setDT)
+match.data <- match.data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
 # a function that computes the elo points added/subtracted from the winner/loser following one match
 elo.calculate.points <- function(arg.p1,arg.p2,arg.winner,arg.p1.matches,arg.p2.matches,arg.prevelo.p1,arg.prevelo.p2) {
@@ -30,88 +32,63 @@ elo.calculate.points <- function(arg.p1,arg.p2,arg.winner,arg.p1.matches,arg.p2.
 }
 
 # subset of data for matches played in 2019
-test.data <- match.data %>% filter(year(tourney_date) == 2019)
-# how big must the array be to hold all players and matches ?
-dim1 <- length(unique(c(test.data[,'winner_id'],test.data[,'loser_id'])))
-dim2 <- data.frame(id = c(test.data[,'winner_id'],test.data[,'loser_id']))%>%group_by(id)%>%summarise(matches=n())%>%select(matches)%>%max()+1
+elo.input.data <- match.data[year(tourney_date)==2019]
 
-# names of array elements
-dimnames1 <- as.character(sort(unique(c(test.data[,'winner_id'],test.data[,'loser_id']))))
+# the number of rows in the matrix corresponds to the number of unique players
+rownames <- unique(c(elo.input.data[,winner_id],elo.input.data[,loser_id]))%>%sort()
+numcols <- rbind(elo.input.data[,.(id = winner_id)],elo.input.data[,.(id = loser_id)])[,.(count=.N),by=.(id)][,count]%>%max()+1L
 
-# create the elo history array
-array.elo <- array(numeric(),c(dim1,dim2+1))
-dimnames(array.elo)[[1]] <- dimnames1
-rm(dim1,dim2)
+# create the elo history matrix
+matrix.elo <- matrix(data = NA, nrow = length(rownames), ncol = numcols, dimnames = list(rownames,NULL))
+rm(numcols,rownames)
 
-# initialise everyone's elo as 1000
-array.elo[,1] <- 1500
-
-# want to get a column on the data indicating number of matches played by each player
-test.data2 <- rbind(
-  test.data[,c('tourney_date','tourney_id','match_num','winner_id')] %>% rename(id = winner_id),
-  test.data[,c('tourney_date','tourney_id','match_num','loser_id')] %>% rename(id = loser_id)
-) %>% arrange(id,tourney_date,tourney_id,match_num) %>% group_by(id) %>% mutate(player_matches = row_number()-1)
-
-# join back to get the number of matches played
-test.data3 <- left_join(x=test.data,y=(test.data2 %>% rename(winner_id = id)),by.x=c("winner_id","tourney_id","match_num")) %>% rename(winner_prev_matches = player_matches)
-test.data4 <- left_join(x=test.data3,y=(test.data2 %>% rename(loser_id = id)),by.x=c("loser_id","tourney_id","match_num")) %>% rename(loser_prev_matches = player_matches)
-test.data <- test.data4 %>% arrange(tourney_date,match_num)
-rm(test.data3,test.data4)
+# initialise everyone's elo as 1500
+matrix.elo[,1] <- 1500
 
 # data is now ready to be looped through
-for (i in 1:nrow(test.data)) {
+
+for (i in 1:nrow(elo.input.data)) {
+  # get values
+  p1 <- elo.input.data$winner_id[i]
+  p2 <- elo.input.data$loser_id[i]
+  winner <- elo.input.data$winner_id[i]
+  p1.matches <- sum(!is.na(matrix.elo[p1,]))-1
+  p2.matches <- sum(!is.na(matrix.elo[p2,]))-1
+  p1.previous.elo <- matrix.elo[p1,p1.matches+1][[1]]
+  p2.previous.elo <- matrix.elo[p2,p2.matches+1][[1]]
+  # run elo function to get updated elos for p2 and p2
   elo.points <- elo.calculate.points(
-    arg.p1 = test.data$winner_id[i],
-    arg.p2 = test.data$loser_id[i],
-    arg.winner = test.data$winner_id[i],
-    arg.p1.matches = test.data$winner_prev_matches[i],
-    arg.p2.matches = test.data$loser_prev_matches[i],
-    arg.prevelo.p1 = array.elo[test.data$winner_id[1],test.data$winner_prev_matches+1][[1]],
-    arg.prevelo.p2 = array.elo[test.data$loser_id[1],test.data$loser_prev_matches+1][[1]]
+    arg.p1 = p1,
+    arg.p2 = p2,
+    arg.winner = winner,
+    arg.p1.matches = p1.matches,
+    arg.p2.matches = p2.matches,
+    arg.prevelo.p1 = p1.previous.elo,
+    arg.prevelo.p2 = p2.previous.elo
   )
   winner.elo.points <- elo.points[[1]]
   loser.elo.points <- elo.points[[2]]
   # update array
-  array.elo[test.data$winner_id[i],test.data$winner_prev_matches[i]+2] <- winner.elo.points
-  array.elo[test.data$loser_id[i],test.data$loser_prev_matches[i]+2] <- loser.elo.points
+  matrix.elo[p1,p1.matches+2] <- winner.elo.points
+  matrix.elo[p2,p2.matches+2] <- loser.elo.points
 }
+rm(i,p1,p2,p1.matches,p2.matches,p1.previous.elo,p2.previous.elo,winner,winner.elo.points,loser.elo.points,elo.points)
 
-# array can now be converted into elo rankings
-# we can ignore the NA entries as they don't correspond to a match played
+# append all non-missing values from the matrix into a vector
+elos <- na.omit(as.vector(t(matrix.elo[,2:ncol(matrix.elo)])))
 
-# pre-allocate data frame having one row per non empty entry in array.elo
-rows <- length(which(!is.na(array.elo)))
-elo.results <- data.frame(
-  player_id = character(rows),
-  match_number = numeric(rows),
-  elo_points = numeric(rows),
-  stringsAsFactors=FALSE
-)
+# convert the matches data into one row per player so it is compatible with the elo output
+results1 <- rbind(
+  elo.input.data[,.(tourney_id,tourney_date,match_num,player_id=winner_id)],
+  elo.input.data[,.(tourney_id,tourney_date,match_num,player_id=loser_id)]
+)[order(player_id,tourney_date,match_num)][,elo := elos]
+# take last match per tourney
+results2 <- results1[,.SD[.N],by=.(player_id,tourney_date)]
+# convert to longitudinal data
+results3 <- results2[order(player_id,-tourney_date)][,lagdate:=lag(tourney_date)-1][,key:=1:nrow(results2)]
+rows <- results3[,.SD[1],by=.(player_id)]$key
+elo.history <- results3[rows,lagdate := as.Date("9999-12-31",format="%Y-%m-%d")][,.(player_id,fromdate=tourney_date,todate=lagdate,elo)][order(player_id,fromdate,todate)]
 
-k <- 1
-for (i in 1:dim(array.elo)[1]) {
-  for (j in 1:dim(array.elo)[2]) {
-    if(!is.na(array.elo[i,j])) {
-      elo.results[k,'player_id'] <- dimnames1[i]
-      elo.results[k,'match_number'] <- j-1
-      elo.results[k,'elo_points'] <- array.elo[i,j]
-      k <- k + 1
-    }
-  }
-}
-rm(i,j,k)
+# tidy
+rm(matrix.elo,results1,results2,results3,rows,elos,rownames)
 
-# add in the match date (we're currently using tourney_date)
-# take the last set of elo points for each tournament for each player
-
-# add fields to the test.data2 dataset
-test.data.join <- test.data2 %>% ungroup() %>% mutate(player_id = id, match_number = player_matches+1) %>% select(player_id,match_number,tourney_date)
-elo.results2 <- inner_join(x=elo.results,y=test.data.join,by=c("player_id","match_number")) %>%
-  group_by(player_id,tourney_date) %>%
-  filter(row_number() == n()) %>% select(-match_number) %>%
-  rename(date = tourney_date)
-elo.results <- elo.results2
-rm(elo.results2)
-
-
-                 
