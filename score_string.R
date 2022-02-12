@@ -1,5 +1,5 @@
 # convert a string representing the score into numeric variables
-convert.score <- function(arg.score.string,arg.current.server) {
+convert.score <- function(arg.score.string) {
   
   object.indexes <- sapply(gregexpr(pattern = " ", arg.score.string)[[1]], FUN = function(x) {x+1})
   num.sets <- length(object.indexes)
@@ -81,7 +81,6 @@ convert.score <- function(arg.score.string,arg.current.server) {
               "p2.games" = p2.games,
               "p1.points" = p1.points,
               "p2.points" = p2.points,
-              "tiebreak.ind" = tiebreak.ind,
-              "current.server" = arg.current.server))
+              "tiebreak.ind" = tiebreak.ind))
   
 }

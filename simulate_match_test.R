@@ -1,3 +1,4 @@
+rm(list=ls())
 
 # define play.match
 play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct,arg.match.p2.serve.pct,arg.match.inherited.score,arg.match.inherited.server) {
