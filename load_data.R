@@ -10,43 +10,19 @@ Data <- do.call("rbind", lapply(files, function(x) fread(x)))
 
 # clean data
 Data[,tourney_date := as.Date(as.character(tourney_date) ,format='%Y%m%d', origin = "1900/01/01")]
-Data[,`:=`(winner_id = as.character(winner_id),loser_is = as.character(loser_id))]
+Data[,`:=`(winner_id = as.character(winner_id),loser_id = as.character(loser_id))]
 
 # dictate what variables get assigned to what data
-match.vars <- c(
-  'tourney_id',
-  'tourney_date',
-  'match_num',
-  'winner_id',
-  'loser_id',
-  'score',
-  'round',
-  'minutes'
-)
-tourney.vars <- c(
-  'tourney_id',
-  'tourney_name',
-  'tourney_date',
-  'surface',
-  'draw_size'
-)
-seed.vars <- c(
-  'tourney_id',
-  'winner_id',
-  'loser_id',
-  'winner_seed',
-  'loser_seed',
-  'round'
-)
-player.vars <- c(
-  'winner_id',
-  'winner_name',
-  'loser_id',
-  'loser_name'
-)
+match.vars <- c('tourney_id','tourney_date','winner_id','loser_id','score','round','minutes')
+tourney.vars <- c('tourney_id','tourney_name','tourney_date','surface','draw_size')
+seed.vars <- c('tourney_id','winner_id','loser_id','winner_seed','loser_seed','round')
+player.vars <- c('winner_id','winner_name','loser_id','loser_name')
 
 # prepare the match data, which is simply a subet (source Data is already one row per match)
-match.data <- Data[,.SD,.SDcols = match.vars]
+match.data <- Data[!(round %in% c("BR","ER")),.SD,.SDcols = match.vars] ; setkey(match.data,round)
+sortorderdf <- data.table(round=c("RR","R128","R64","R32","R16","QF","SF","F"),order=1:8) ; setkey(sortorderdf,round)
+match.data <- sortorderdf[match.data][order(tourney_id,order)] ; rm(sortorderdf)
+match.data[,match_num := seq_len(.N), by = .(tourney_id)]
 
 # prepare tournament data
 tourney.data <- Data[,.SD,.SDcols = tourney.vars] %>% distinct()
@@ -71,3 +47,11 @@ rm(player.data2,player.vars)
 qa1 <- player.data[,.(count = .N),by = player_id][count>1,]
 rm(qa1)
 
+# ensure that the no the loser of a match does not play in a match with a higher ordering
+perplayer <- rbind(match.data[,.(tourney_id,player_id=winner_id,order,results='w')],match.data[,.(tourney_id,player_id=loser_id,order,results='l')])[order(tourney_id,player_id,order)]
+qa1 <- perplayer[,.(max_round = max(order)), by = .(tourney_id,player_id,results)]
+bestwin <- qa1[results == 'w',.(tourney_id,player_id,maxwin=max_round)] ; setkey(bestwin,tourney_id,player_id)
+bestloss <- qa1[results == 'l',.(tourney_id,player_id,maxloss=max_round)] ; setkey(bestloss,tourney_id,player_id)
+problem <- bestloss[bestwin][maxwin > maxloss & !is.na(maxloss)] ; setkey(problem,tourney_id)
+tourney <- distinct(Data[,.(tourney_id,tourney_name)]) ; setkey(tourney,tourney_id)
+tourney[problem]
