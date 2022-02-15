@@ -1,7 +1,7 @@
 rm(list=ls())
 
 # define play.match
-play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct,arg.match.p2.serve.pct,arg.match.inherit,arg.match.inherited.score) {
+play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct,arg.match.p2.serve.pct,arg.match.inherit = FALSE,arg.match.inherited.score = NULL) {
   # initial values
   match.over <- FALSE
   current.server <- arg.match.first.server
@@ -73,7 +73,7 @@ play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct
 }
 
 # define play.set
-play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.pct,arg.set.inherit,arg.set.inherited.score) {
+play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.pct,arg.set.inherit = FALSE,arg.set.inherited.score = NULL) {
   # initial values
   set.over <- FALSE
   p1.games <- 0
@@ -167,7 +167,7 @@ play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.
 }
 
 # define play.game
-play.game <- function(arg.game.server,arg.game.serve.pct,arg.game.inherit,arg.game.inherited.score) {
+play.game <- function(arg.game.server,arg.game.serve.pct,arg.game.inherit = FALSE,arg.game.inherited.score = NULL) {
   # initial values
   p1.points <- 0
   p2.points <- 0
