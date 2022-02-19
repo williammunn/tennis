@@ -1,0 +1,58 @@
+---
+title: "How good do you have to be to win a tennis match?"
+author: "William Munn"
+date: "2/15/2022"
+output: 
+  html_document:
+    theme: united
+---
+
+```{r,include=FALSE}
+# This is needed to set the directory for all subsequent chunks
+knitr::opts_knit$set(root.dir = '/Users/vickimunn/Desktop/R Stuff/github/functions/')
+```
+
+## Simulating games in a tennis match
+
+```{r,include=FALSE}
+library(data.table)
+library(ggplot2)
+source("simulate_match.R")
+```
+
+What is the relationship between the percentage of points a player will win on their serve, and the percentage of *games* that same player will win? The unique scoring system in tennis means that this relationship is not linear.
+
+Without doing the maths, this relationship can be discovered by simulating games of tennis. The `play.game()` function I have written makes this pretty straightforward. First things first, this function returns a list of two objects. The first is simply the winner of the game. The second is a dataframe that records the outcome of each game:
+
+```{r}
+result <- play.game("P1",0.6) # ignoring optional arguments that allow a game to begin mid-way
+result[[1]]
+result[[2]]
+```
+
+Here you can see the results for a player who wins, on average, 60% of their points played on serve. The most important thing is the *on average* part. Since the outcomes of individual points rely on a random number being generated, it's possible (but unlikely) for a player who wins, say, 80% of their service points to still lose a simulated game.
+
+How unlikely, though? If we do a sufficiently large enough number of simulations, we can take a look.
+
+```{r}
+ntimes <- 1000
+winners <- sapply(1:ntimes,function(x) {play.game("P1",0.8)[[1]]})
+sum(winners=="P1")/length(winners)
+```
+
+The estimate printed below of `r paste(round(100*(sum(winners=="P1")/length(winners)), 2), "%", sep="")` was calculated based on `r ntimes` games being played. Next question: how many times does the simulation need to be run in order for the results to be reliable? The chart below illustrates how quickly the result will converge:
+
+```{r, fig.width = 3, fig.height = 3}
+# record how the result changes with respect to number of simulatons
+ntimes <- 2500
+winners <- sapply(1:ntimes,function(x) {play.game("P1",0.8)[[1]]})
+graphdata <- data.table(n = c(1:ntimes),winner = winners)[,pct:=cumsum(winner=="P1")/.I]
+p <- ggplot(graphdata, aes(x=n, y=pct)) + geom_line(colour = "cyan 3")
+p
+```
+
+A few thousand runs seems like enough, then, to give us a reliable answer: a player who wins 80% of points on their serve would expect to win around **98%** of their service games.
+
+At the beginning of this post, I said that the relationship between a player's percentage of points won on serve and their percentage of *games* won on serve was non-linear. We can show this with - you guessed it - more simulations.
+
+
