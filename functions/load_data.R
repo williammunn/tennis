@@ -1,7 +1,5 @@
-# prepare tennis match data
-rm(list=ls())
-require(dplyr)
-require(data.table)
+# store current directory
+dir <- getwd()
 setwd('/Users/vickimunn/Desktop/R Stuff/github/Data/')
 
 # load match data
@@ -55,3 +53,8 @@ bestloss <- qa1[results == 'l',.(tourney_id,player_id,maxloss=max_round)] ; setk
 problem <- bestloss[bestwin][maxwin > maxloss & !is.na(maxloss)] ; setkey(problem,tourney_id)
 tourney <- distinct(Data[,.(tourney_id,tourney_name)]) ; setkey(tourney,tourney_id)
 tourney[problem]
+
+rm(bestloss,bestwin,perplayer,problem,qa1,tourney)
+
+# re-set working directory
+setwd(dir)
