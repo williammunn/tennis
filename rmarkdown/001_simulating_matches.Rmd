@@ -12,7 +12,7 @@ output:
 knitr::opts_knit$set(root.dir = '/Users/vickimunn/Desktop/R Stuff/github/functions/')
 ```
 
-## Simulating games in a tennis match
+### Simulating games in a tennis match
 
 ```{r,include=FALSE}
 library(data.table)
@@ -22,7 +22,7 @@ source("simulate_match.R")
 
 What is the relationship between the percentage of points a player will win on their serve, and the percentage of *games* that same player will win? The unique scoring system in tennis means that this relationship is not linear.
 
-Without doing the maths, this relationship can be discovered by simulating games of tennis. The `play.game()` function I have written makes this pretty straightforward. First things first, this function returns a list of two objects. The first is simply the winner of the game. The second is a dataframe that records the outcome of each game:
+Without doing the maths, this relationship can be inferred by simulating games of tennis. The `play.game()` function I have written makes this pretty straightforward. This function returns a list of two objects. The first is simply the winner of the game. The second is a dataframe that records the outcome of each game:
 
 ```{r}
 result <- play.game("P1",0.6) # ignoring optional arguments that allow a game to begin mid-way
@@ -51,8 +51,26 @@ p <- ggplot(graphdata, aes(x=n, y=pct)) + geom_line(colour = "cyan 3")
 p
 ```
 
-A few thousand runs seems like enough, then, to give us a reliable answer: a player who wins 80% of points on their serve would expect to win around **98%** of their service games.
+A few thousand runs seems like enough, then, to give us a reliable answer: a player who wins 80% of points on their serve would expect to win around **98%** of their service games - essentially all of them.
 
 At the beginning of this post, I said that the relationship between a player's percentage of points won on serve and their percentage of *games* won on serve was non-linear. We can show this with - you guessed it - more simulations.
+
+```{r, fig.width = 3, fig.height = 3, eval = FALSE}
+# relationship between points won and games won
+ntimes <- 1000
+srvpct <- rep(seq(0,1,0.025),ntimes)
+results <- data.table(srv_pct = srvpct, winner = sapply(srvpct, function(x) {play.game("P1",x)[[1]]}))
+results <- results[,.(win_pct = sum(winner == "P1")/.N),by = srv_pct]
+p <- ggplot(results, aes(x=srv_pct, y=win_pct)) + geom_line(colour = "cyan 3", size = 0.8)
+p
+```
+
+In order words: if you're serving, then the gain you get from increasing your percentage of points won on server is the greatest around 50%. Too much higher than that, the odds of you holding serve are a sure thing, anyway, so the gain becomes less.
+
+If the `play.game()` code is any good, then we'd expect these theoretical results to be consistent with tennis matches played in the real world. I've used Jeff Sackmann's fantastic repository of ATP match data to check.
+
+
+
+
 
 
