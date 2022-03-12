@@ -187,9 +187,12 @@ stats.data <- rbind(
 )[,`:=`(
   svpt_won = fwon + swon,
   svgames_won = svgames - (bpfaced - bpsaved)
-)]
+)][,`:=`(
+  svpts_pct_won = svpt_won / svpt,
+  svgames_pct_won = svgames_won / svgames
+)][!(substr(score,nchar(score)-2,nchar(score))  %in% c('RET','W/O')),][!is.na(svpts_pct_won),]
 
-# check derived svgames_won by examining the score
-setwd('/Users/williammunn/Documents/Github/tennis/functions/');source("score_string.R")
-
-
+# determine average % pts won vs % svgames held
+results <- stats.data[,.(point = round(svpts_pct_won/0.01)*0.01,game = round(svgames_pct_won/0.01)*0.01)][point >= 0.4,.(avg_games = sum(game)/.N), by = point]
+p <- ggplot(results, aes(x = point, y = avg_games)) + geom_line(size = 0.8, color = "cyan 3")
+p

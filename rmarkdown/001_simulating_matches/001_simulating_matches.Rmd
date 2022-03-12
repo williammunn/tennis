@@ -12,8 +12,6 @@ output:
 knitr::opts_knit$set(root.dir = '/Users/williammunn/Documents/github/tennis/functions/')
 ```
 
-### Simulating games in a tennis match
-
 ```{r,include=FALSE}
 library(data.table)
 library(ggplot2)
@@ -211,7 +209,7 @@ play.tiebreak <- function(arg.tiebreak.first.server,arg.tiebreak.p1.serve.pct,ar
 ```{r, cache = TRUE, fig.width = 3, fig.height = 3}
 # relationship between points won and sets won
 simulations <- 100
-p1srange <- rep(seq(0.1,0.9,0.025),simulations)
+p1srange <- rep(seq(0.1,1,0.025),simulations)
 p2srange <- rep(seq(0.5,0.9,0.1),simulations)
 comb <- expand.grid(p1 = p1srange, p2 = p2srange)
 results <- apply(comb, 1, function(x) play.set("P1",x[1],x[2])[[1]])
@@ -221,8 +219,6 @@ p
 ```
 
 The lowest line represents an opponent who wins, on average, 50% of their points on serve. The remaining lines show opponents who win 60%, 70%, 80% and 90% of points on their serve.
-
-
 
 
 
