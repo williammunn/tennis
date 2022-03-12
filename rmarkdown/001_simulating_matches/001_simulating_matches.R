@@ -1,7 +1,7 @@
 rm(list=ls())
 library(ggplot2)
 library(data.table)
-setwd('/Users/vickimunn/Desktop/R Stuff/github/functions/');source("simulate_match.R")
+setwd('/Users/williammunn/Documents/Github/tennis/functions/');source("simulate_match.R")
 
 # probability of winning a game given different % service points won
 ntimes <- 1000
@@ -23,6 +23,21 @@ results <- results[,.(win_pct = sum(winner == "P1")/.N),by = srv_pct]
 p <- ggplot(results, aes(x=srv_pct, y=win_pct)) + geom_line(colour = "cyan 3", size = 0.8)
 p
 
+# relationship between points won and sets won
+simulations <- 10
+p1srange <- rep(seq(0.5,0.9,0.025),simulations)
+p2srange <- rep(seq(0.5,0.9,0.1),simulations)
+comb <- expand.grid(p1 = p1srange, p2 = p2srange)
+results <- apply(comb, 1, function(x) play.set("P1",x[1],x[2])[[1]])
+
+x <- data.table(p1 = comb$p1, p2 = comb$p2, winner = results)[,.(win_pct = sum(winner=="P1")/.N),by=.(p1,p2)][order(p1,p2)]
+
+
+
+
+
+
+
 rm(list=ls())
 setwd('/Users/vickimunn/Desktop/R Stuff/github/functions/');source("load_data.R")
 
@@ -40,7 +55,7 @@ stats.data <- rbind(
 )]
 
 # check derived svgames_won by examining the score
-setwd('/Users/vickimunn/Desktop/R Stuff/github/functions/');source("score_string.R")
+setwd('/Users/williammunn/Documents/Github/tennis/functions/');source("score_string.R")
 
 convert.score("7-6 4-2")
 

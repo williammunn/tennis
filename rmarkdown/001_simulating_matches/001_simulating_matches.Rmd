@@ -9,7 +9,7 @@ output:
 
 ```{r,include=FALSE}
 # This is needed to set the directory for all subsequent chunks
-knitr::opts_knit$set(root.dir = '/Users/vickimunn/Desktop/R Stuff/github/functions/')
+knitr::opts_knit$set(root.dir = '/Users/williammunn/Documents/github/tennis/functions/')
 ```
 
 ### Simulating games in a tennis match
@@ -55,7 +55,7 @@ A few thousand runs seems like enough, then, to give us a reliable answer: a pla
 
 At the beginning of this post, I said that the relationship between a player's percentage of points won on serve and their percentage of *games* won on serve was non-linear. We can show this with - you guessed it - more simulations.
 
-```{r, fig.width = 3, fig.height = 3, eval = FALSE}
+```{r, fig.width = 3, fig.height = 3}
 # relationship between points won and games won
 ntimes <- 1000
 srvpct <- rep(seq(0,1,0.025),ntimes)
@@ -67,7 +67,7 @@ p
 
 In order words: if you're serving, then the gain you get from increasing your percentage of points won on server is the greatest around 50%. Too much higher than that, the odds of you holding serve are a sure thing, anyway, so the gain becomes less.
 
-If the `play.game()` code is any good, then we'd expect these theoretical results to be consistent with tennis matches played in the real world. I've used Jeff Sackmann's fantastic repository of ATP match data to check.
+How does a players strength on serve affect their probability of winning sets and matches? To understand this, we need an assumption about their opponent's strength on serve, too. Here are the chance's of winning the set, for a range of different opponents:
 
 
 
