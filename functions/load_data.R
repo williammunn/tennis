@@ -1,6 +1,9 @@
 # store current directory
+library(dplyr)
+library(data.table)
+library(lubridate)
 dir <- getwd()
-setwd('/Users/vickimunn/Desktop/R Stuff/github/Data/')
+setwd('/Users/williammunn/Documents/Github/tennis/Data/')
 
 # load match data
 files <- list.files(pattern="atp_matches_[^_]*.csv")
