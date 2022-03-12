@@ -218,7 +218,7 @@ p <- ggplot(results2, aes(x=p1, y = win_pct, group = p2, color = p2)) + geom_lin
 p
 ```
 
-The lowest line represents an opponent who wins, on average, 50% of their points on serve. The remaining lines show opponents who win 60%, 70%, 80% and 90% of points on their serve.
+The lowest line represents an opponent who wins, on average, 90% of their points on serve. The remaining lines show opponents who win 80%, 70%, 60% and 50% of points on their serve. We can see that, in order to have a 50% chance of winning, you need to serve at least as well as your opponent does. The win probabilities also show that, there's a steep price to pay for turning out a serving performance even marginally worse than an opponent's (this effect cuts both ways, of course).
 
 
 
