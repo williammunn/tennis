@@ -1,7 +1,6 @@
 ---
 title: "How good do you have to be to win a tennis match?"
-author: "William Munn"
-date: "2/15/2022"
+date: "March 2022"
 output: 
   html_document:
     theme: united
@@ -15,214 +14,34 @@ knitr::opts_knit$set(root.dir = '/Users/williammunn/Documents/github/tennis/func
 ```{r,include=FALSE}
 library(data.table)
 library(ggplot2)
+library(scales)
 source("simulate_match.R")
+#source("/Users/williammunn/Documents/github/tennis/rmarkdown/001_simulating_matches/001_simulating_matches.R",local = knitr::knit_global())
 ```
 
-What is the relationship between the percentage of points a player will win on their serve, and the percentage of *games* that same player will win? The unique scoring system in tennis means that this relationship is not linear.
+### The good, the bad, and the ugly
 
-Without doing the maths, this relationship can be inferred by simulating games of tennis. The `play.game()` function I have written makes this pretty straightforward. This function returns a list of two objects. The first is simply the winner of the game. The second is a dataframe that records the outcome of each game:
+At the Monte Carlo Masters in 2017, Diego Schwartzman managed a victory over Roberto Bautista Agut, despite winning only 48% of his own points on serve. To claim so few points on your own serve would typically seal your fate in a professional tennis match. However, offsetting this was some incredible returning that saw him take 62% of points on his spanish rival's own serve.
+
+At the other end of the spectrum: in 2019, at the New York Open, Reilly Opelka eventually edged out his compatriot John Isner. Unsurprisingly, given a match up between the two, the match was completely serve dominated (this occasion saw the Americans shatter the record for most aces in a best of three match, with a combined total of 81). In fact, despite winning 80% of his own service points, Isner could only manage a paltry 13% of points won on return (compared with Opelka's still-laughable 19%).
+
+Matches like these two are extreme cases - and indeed, the tour average since 2010 for winners has been 69%/42% for serve and return points won - but they do suggest that, in order to win a tennis match, your combined serving and returning performance needs to be *good*. But how good is good enough?
+
+### Playing tennis matches using R
+
+Here are some R functions I've developed that will help.
+
+The first is `play.point()`, which takes in a the name of the server (needs to be either "P1" or "P2"), and the average percentage of points that player wins on their serve. We could "simulate" a single point from Isner in his match above like this:
 
 ```{r}
-result <- play.game("P1",0.6) # ignoring optional arguments that allow a game to begin mid-way
-result[[1]]
-result[[2]]
+play.point("P1",0.8)
 ```
 
-Here you can see the results for a player who wins, on average, 60% of their points played on serve. The most important thing is the *on average* part. Since the outcomes of individual points rely on a random number being generated, it's possible (but unlikely) for a player who wins, say, 80% of their service points to still lose a simulated game.
-
-How unlikely, though? If we do a sufficiently large enough number of simulations, we can take a look.
+The `play.point()` functions depends on a random number being drawn each time it gets invoked. So, while our R version of  Isner will still lose the odd point, he should, on average, win on his serve four out of five times. A larger number of simulations shows this:
 
 ```{r}
-ntimes <- 1000
-winners <- sapply(1:ntimes,function(x) {play.game("P1",0.8)[[1]]})
-sum(winners=="P1")/length(winners)
+# show that play.point is eventually right
+outcomes <- sapply(1:10000, function(x) play.point("P1",0.8))
+win_percent <- sum(outcomes == "P1")/length(outcomes)
+percent(win_percent)
 ```
-
-The estimate printed below of `r paste(round(100*(sum(winners=="P1")/length(winners)), 2), "%", sep="")` was calculated based on `r ntimes` games being played. Next question: how many times does the simulation need to be run in order for the results to be reliable? The chart below illustrates how quickly the result will converge:
-
-```{r, fig.width = 3, fig.height = 3}
-# record how the result changes with respect to number of simulatons
-ntimes <- 2500
-winners <- sapply(1:ntimes,function(x) {play.game("P1",0.8)[[1]]})
-graphdata <- data.table(n = c(1:ntimes),winner = winners)[,pct:=cumsum(winner=="P1")/.I]
-p <- ggplot(graphdata, aes(x=n, y=pct)) + geom_line(colour = "cyan 3")
-p
-```
-
-A few thousand runs seems like enough, then, to give us a reliable answer: a player who wins 80% of points on their serve would expect to win around **98%** of their service games - essentially all of them.
-
-At the beginning of this post, I said that the relationship between a player's percentage of points won on serve and their percentage of *games* won on serve was non-linear. We can show this with - you guessed it - more simulations.
-
-```{r, cache = TRUE, fig.width = 3, fig.height = 3}
-# relationship between points won and games won
-ntimes <- 1000
-srvpct <- rep(seq(0,1,0.025),ntimes)
-results <- data.table(srv_pct = srvpct, winner = sapply(srvpct, function(x) {play.game("P1",x)[[1]]}))
-results <- results[,.(win_pct = sum(winner == "P1")/.N),by = srv_pct]
-p <- ggplot(results, aes(x=srv_pct, y=win_pct)) + geom_line(colour = "cyan 3", size = 0.8)
-p
-```
-
-In order words: if you're serving, then the gain you get from increasing your percentage of points won on server is the greatest around 50%. Too much higher than that, the odds of you holding serve are a sure thing, anyway, so the gain becomes less.
-
-How does a players strength on serve affect their probability of winning sets and matches? To understand this, we need an assumption about their opponent's strength on serve, too. Here are the chance's of winning the set, for a range of different opponents:
-
-```{r, include = FALSE}
-# re define some functions to speed them up
-play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.pct) {
-  # initial values
-  set.over <- FALSE
-  p1.games <- 0
-  p2.games <- 0
-  tiebreak <- FALSE
-  current.server <- arg.set.first.server
-  set.most.recent.server <- current.server
-  # play games until the set is over
-  while(set.over == FALSE) {
-    if (!tiebreak) {
-      # play a game
-      game.object <- play.game(arg.game.server = current.server, arg.game.serve.pct = ifelse(current.server == 'P1', arg.set.p1.serve.pct, arg.set.p2.serve.pct))
-      # immediately switch off the inherited switch, so that any future games start at 0-0
-      inherit.game <- FALSE
-      # retrieve the winner of the game
-      game.winner <- game.object
-      # update the most recent server variable
-      set.most.recent.server <- current.server
-      # award winner a game
-      if (game.winner == 'P1') {
-        p1.games <- p1.games + 1
-      } else {
-        p2.games <- p2.games + 1
-      }
-      # check if set is over
-      if((p1.games == 6 & p2.games <= 4) | (p2.games == 6 & p1.games <= 4) | p1.games == 7 | p2.games == 7) {
-        set.over <- TRUE
-      }
-      # swap server
-      current.server = ifelse(current.server == 'P1','P2','P1')
-      # check if tiebreak needed
-      if (p1.games == 6 & p2.games == 6) {
-        tiebreak <- TRUE
-      }
-    }
-    if(tiebreak) {
-      game.object <- play.tiebreak(arg.tiebreak.first.server = current.server,arg.tiebreak.p1.serve.pct = arg.set.p1.serve.pct,arg.tiebreak.p2.serve.pct = arg.set.p2.serve.pct)
-      game.winner <- game.object
-      set.over <- TRUE
-      # award winner of tiebreak a game
-      if (game.winner == 'P1') {
-        p1.games <- p1.games + 1
-      } else {
-        p2.games <- p2.games + 1
-      }
-    }
-  }
-  if (p1.games > p2.games) {
-    set.winner <- 'P1'
-  } else {
-    set.winner <- 'P2'
-  }
-  return(set.winner)
-}
-
-
-
-# define play.game
-play.game <- function(arg.game.server,arg.game.serve.pct) {
-  # initial values
-  p1.points <- 0
-  p2.points <- 0
-  current.server <- arg.game.server
-  game.over <- FALSE
-  # play points until the game is over
-  while(game.over == FALSE) {
-    # play a point
-    point.winner <- play.point(arg.point.server = current.server, arg.point.serve.pct = arg.game.serve.pct)
-    # increment points of the winner of the point just played
-    if (point.winner == 'P1') {
-      p1.points <- p1.points + 1
-    } else {
-      p2.points <- p2.points + 1
-    }
-    if (p1.points == 4 & p2.points == 4) {
-      p1.points <- 3
-      p2.points <- 3
-    }
-    # check if the game is over
-    if ((p1.points >= 4 | p2.points >= 4) &
-        (abs(p1.points - p2.points) >= 2)) {
-      game.over <- TRUE
-    }
-  }
-  if (p1.points > p2.points) {
-    game.winner <- 'P1'
-  } else {
-    game.winner <- 'P2'
-  }
-  return(game.winner)
-}
-
-
-play.tiebreak <- function(arg.tiebreak.first.server,arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct) {
-  # initial values
-  tiebreak.over <- FALSE
-  tiebreak.current.server <- arg.tiebreak.first.server
-  p1.points <- 0
-  p2.points <- 0
-  tiebreak.serves.remaining <- 1 # first person to serve only serves once
-  # play the remainder of the tiebreak
-  while(tiebreak.over == FALSE) {
-    # play the current server's 2 points
-    while (tiebreak.serves.remaining > 0) {
-      # play the first point on this player's server
-      point.winner <- play.point(arg.point.server = tiebreak.current.server, arg.point.serve.pct = ifelse(tiebreak.current.server == 'P1',arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct))
-      # award point to the winner
-      if (point.winner == 'P1') {
-        p1.points <- p1.points + 1
-      } else {
-        p2.points <- p2.points + 1
-      }
-      # increment the points served by this current server
-      tiebreak.serves.remaining <- tiebreak.serves.remaining - 1
-      # check if tiebreak should be ended
-      if ((p1.points >= 7 | p2.points >= 7) & (abs(p1.points - p2.points) > 1)) {
-        tiebreak.over <- TRUE
-        break
-      }
-    }
-    # after the first point players get 2 serves each
-    tiebreak.serves.remaining <- 2
-    # swap server
-    tiebreak.current.server <- ifelse(tiebreak.current.server == "P1","P2","P1")
-  }
-  # determine who wins the tiebreak
-  if (p1.points > p2.points) {
-    tiebreak.winner <- 'P1'
-  } else {
-    tiebreak.winner <- 'P2'
-  }
-  # return the winner of the tiebreak
-  return(tiebreak.winner)
-}
-```
-
-```{r, cache = TRUE, fig.width = 3, fig.height = 3}
-# relationship between points won and sets won
-simulations <- 100
-p1srange <- rep(seq(0.1,1,0.025),simulations)
-p2srange <- rep(seq(0.5,0.9,0.1),simulations)
-comb <- expand.grid(p1 = p1srange, p2 = p2srange)
-results <- apply(comb, 1, function(x) play.set("P1",x[1],x[2])[[1]])
-results2 <- data.table(p1 =comb$p1, p2=comb$p2, winner=results)[,.(win_pct = sum(winner=="P1")/.N),by=.(p1,p2)][order(p1,p2)]
-p <- ggplot(results2, aes(x=p1, y = win_pct, group = p2, color = p2)) + geom_line(size = 0.8) + theme(legend.position = "none")
-p
-```
-
-The lowest line represents an opponent who wins, on average, 90% of their points on serve. The remaining lines show opponents who win 80%, 70%, 60% and 50% of points on their serve. We can see that, in order to have a 50% chance of winning, you need to serve at least as well as your opponent does. The win probabilities also show that, there's a steep price to pay for turning out a serving performance even marginally worse than an opponent's (this effect cuts both ways, of course).
-
-
-
-
-
-
-
