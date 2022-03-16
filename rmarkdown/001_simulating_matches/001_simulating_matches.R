@@ -43,6 +43,56 @@ outcomes <- sapply(1:1000, function(x) play.point("P1",0.8))
 win_percent <- sum(outcomes == "P1")/length(outcomes)
 percent(win_percent)
 
+# average number of points in a match since 2000
+matchlength <- Data[!(substr(score,nchar(score)-2,nchar(score))  %in% c('RET','W/O')),][best_of == '3',]
+median(na.omit(matchlength$w_svpt + matchlength$l_svpt))
+mean(na.omit(matchlength$w_svpt + matchlength$l_svpt))
+
+# count breaks of serve
+matchdata <- play.match(3,"P1",0.8,0.8)[[2]]
+
+# count number of games that went to deuce at least once
+setDT(matchdata)[,`:=`(
+  p1.points = cumsum(winner == 'P1'),
+  p2.points = cumsum(winner == 'P2')),
+  by = .(set_number,game_number)
+  ][p1.points == 3 & p2.points == 3,.N, by = .(set_number,game_number)
+    ][,.N]
+
+# many simulations for two players that serve well
+deuces <- sapply(1:1000, function(x) {
+  result <- play.match(3,"P1",0.8,0.8)[[2]]
+  setDT(result)
+  return(
+    result[,`:=`(
+      p1.points = cumsum(winner == 'P1'),
+      p2.points = cumsum(winner == 'P2')),
+      by = .(set_number,game_number)
+    ][p1.points == 3 & p2.points == 3,.N, by = .(set_number,game_number)
+    ][,.N]
+  ) }
+)
+
+mean(deuces)
+# 3.21
+
+# same thing for a game of two mediocre servers
+deuces <- sapply(1:1000, function(x) {
+  result <- play.match(3,"P1",0.5,0.5)[[2]]
+  setDT(result)
+  return(
+    result[,`:=`(
+      p1.points = cumsum(winner == 'P1'),
+      p2.points = cumsum(winner == 'P2')),
+      by = .(set_number,game_number)
+    ][p1.points == 3 & p2.points == 3,.N, by = .(set_number,game_number)
+    ][,.N]
+  ) }
+)
+
+mean(deuces)
+# 7.6
+
 # probability of winning a game given different % service points won
 #ntimes <- 1000
 #winners <- sapply(1:ntimes,function(x) {play.game("P1",0.8)[[1]]})

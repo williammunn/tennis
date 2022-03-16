@@ -4,6 +4,7 @@ date: "March 2022"
 output: 
   html_document:
     theme: united
+urlcolor: blue
 ---
 
 ```{r,include=FALSE}
@@ -19,7 +20,7 @@ source("simulate_match.R")
 #source("/Users/williammunn/Documents/github/tennis/rmarkdown/001_simulating_matches/001_simulating_matches.R",local = knitr::knit_global())
 ```
 
-### The good, the bad, and the ugly
+*The analysis in this post uses Jeff Sackmann's [repository of match data](https://github.com/JeffSackmann/tennis_atp)*
 
 At the Monte Carlo Masters in 2017, Diego Schwartzman managed a victory over Roberto Bautista Agut, despite winning only 48% of his own points on serve. To claim so few points on your own serve would typically seal your fate in a professional tennis match. However, offsetting this was some incredible returning that saw him take 62% of points on his spanish rival's own serve.
 
@@ -45,3 +46,37 @@ outcomes <- sapply(1:10000, function(x) play.point("P1",0.8))
 win_percent <- sum(outcomes == "P1")/length(outcomes)
 percent(win_percent)
 ```
+
+Next up are basically a bunch of logical extensions to our simulations: we can play games using `play.game()`, sets using `play.set()`, and matches using `play.match`. You can even get R to play a single tiebreak using `play.tiebreak()`. These functions rely on each other, just like in an actual game, set, or match of tennis.
+
+All functions bar `play.point()` return a list consisting of two outputs. The first is simply the winner of whatever was just played - always either "P1" or "P2". The second is a data framr storing the *outcome* of each point. This is interesting for gathering data about the matches played, and we can use this data to generate statistics - % of points won on serve, break points generated and saved, and so on.
+
+Here is a recreation of a match between two serve-oriented ('servebots', in today's parlance) players like Isner and Opelka:
+
+```{r}
+# a match between two players who win around 80% of points won on serve
+result <- play.match(3,"P1",0.8,0.8)
+# winner
+result[[1]]
+# first and last few points
+rbind(head(result[[2]],4),tail(result[[2]],4))
+```
+
+```{r,include=FALSE}
+# Number of games that featured a deuce
+deuces <- setDT(result[[2]])[,`:=`(
+  p1.points = cumsum(winner == 'P1'),
+  p2.points = cumsum(winner == 'P2')),
+  by = .(set_number,game_number)
+  ][p1.points == 3 & p2.points == 3,.N, by = .(set_number,game_number)
+    ][,.N]
+```
+
+This best of 3 set match lasted a total of `r nrow(result[[2]])` points. It only featured `r deuces` games that went to deuce. In fact, after 1,000 matches between two strong servers like Isner/Opelka, we only see an average of 3.2 games go to deuce per match. Compare this to two players with much more mediocre serving (or strong returning), like we saw back in Schwartzman and Bautista Agut, and we'd see an average of 7.6 games per match go to deuce.
+
+All of which is to say that these tennis-playing R functions are good for confirming the basic intuitions that most people already hold about tennis.
+
+### When serving well serves no real purpose
+
+It's clearly helpful if you can serve with the kind of effectiveness that we've come to expect from Isner, Opelka, Kyrgios *et al*, but these serve-centric players often have little to no return game. They might win almost every service game, but equally, they'll hardly ever make inroads against even moderately-serving opponents, leading to inevitable tiebreaks. If a player like Isner could somehow give up a small amount of effectiveness on his serve and *gain* some returning skill, would it help him win more matches?
+

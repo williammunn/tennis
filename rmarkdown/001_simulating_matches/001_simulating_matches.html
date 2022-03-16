@@ -374,8 +374,8 @@ match?</h1>
 </div>
 
 
-<div id="the-good-the-bad-and-the-ugly" class="section level3">
-<h3>The good, the bad, and the ugly</h3>
+<p><em>The analysis in this post uses Jeff Sackmann’s <a href="https://github.com/JeffSackmann/tennis_atp">repository of match
+data</a></em></p>
 <p>At the Monte Carlo Masters in 2017, Diego Schwartzman managed a
 victory over Roberto Bautista Agut, despite winning only 48% of his own
 points on serve. To claim so few points on your own serve would
@@ -395,7 +395,6 @@ average since 2010 for winners has been 69%/42% for serve and return
 points won - but they do suggest that, in order to win a tennis match,
 your combined serving and returning performance needs to be
 <em>good</em>. But how good is good enough?</p>
-</div>
 <div id="playing-tennis-matches-using-r" class="section level3">
 <h3>Playing tennis matches using R</h3>
 <p>Here are some R functions I’ve developed that will help.</p>
@@ -406,14 +405,66 @@ point from Isner in his match above like this:</p>
 <pre class="r"><code>play.point(&quot;P1&quot;,0.8)</code></pre>
 <pre><code>## [1] &quot;P1&quot;</code></pre>
 <p>The <code>play.point()</code> functions depends on a random number
-being drawn each time it gets invoked. So, while Isner will lose the odd
-point, he should, on average, win on his serve four out of five times. A
-larger number of simulations shows this:</p>
+being drawn each time it gets invoked. So, while our R version of Isner
+will still lose the odd point, he should, on average, win on his serve
+four out of five times. A larger number of simulations shows this:</p>
 <pre class="r"><code># show that play.point is eventually right
 outcomes &lt;- sapply(1:10000, function(x) play.point(&quot;P1&quot;,0.8))
 win_percent &lt;- sum(outcomes == &quot;P1&quot;)/length(outcomes)
 percent(win_percent)</code></pre>
 <pre><code>## [1] &quot;80%&quot;</code></pre>
+<p>Next up are basically a bunch of logical extensions to our
+simulations: we can play games using <code>play.game()</code>, sets
+using <code>play.set()</code>, and matches using
+<code>play.match</code>. You can even get R to play a single tiebreak
+using <code>play.tiebreak()</code>. These functions rely on each other,
+just like in an actual game, set, or match of tennis.</p>
+<p>All functions bar <code>play.point()</code> return a list consisting
+of two outputs. The first is simply the winner of whatever was just
+played - always either “P1” or “P2”. The second is a data framr storing
+the <em>outcome</em> of each point. This is interesting for gathering
+data about the matches played, and we can use this data to generate
+statistics - % of points won on serve, break points generated and saved,
+and so on.</p>
+<p>Here is a recreation of a match between two serve-oriented
+(‘servebots’, in today’s parlance) players like Isner and Opelka:</p>
+<pre class="r"><code># a match between two players who win around 80% of points won on serve
+result &lt;- play.match(3,&quot;P1&quot;,0.8,0.8)
+# winner
+result[[1]]</code></pre>
+<pre><code>## [1] &quot;P1&quot;</code></pre>
+<pre class="r"><code># first and last few points
+rbind(head(result[[2]],4),tail(result[[2]],4))</code></pre>
+<pre><code>##     point_number server winner game_number tiebreak_ind set_number
+## 1              1     P1     P1           1        FALSE          1
+## 2              2     P1     P2           1        FALSE          1
+## 3              3     P1     P1           1        FALSE          1
+## 4              4     P1     P1           1        FALSE          1
+## 149            9     P1     P2          13         TRUE          2
+## 150           10     P2     P1          13         TRUE          2
+## 151           11     P2     P1          13         TRUE          2
+## 152           12     P1     P1          13         TRUE          2</code></pre>
+<p>This best of 3 set match lasted a total of 152 points. It only
+featured 3 games that went to deuce. In fact, after 1,000 matches
+between two strong servers like Isner/Opelka, we only see an average of
+3.2 games go to deuce per match. Compare this to two players with much
+more mediocre serving (or strong returning), like we saw back in
+Schwartzman and Bautista Agut, and we’d see an average of 7.6 games per
+match go to deuce.</p>
+<p>All of which is to say that these tennis-playing R functions are good
+for confirming the basic intuitions that most people already hold about
+tennis.</p>
+</div>
+<div id="when-serving-well-serves-no-real-purpose" class="section level3">
+<h3>When serving well serves no real purpose</h3>
+<p>It’s clearly helpful if you can serve with the kind of effectiveness
+that we’ve come to expect from Isner, Opelka, Kyrgios <em>et al</em>,
+but these serve-centric players often have little to no return game.
+They might win almost every service game, but equally, they’ll hardly
+ever make inroads against even moderately-serving opponents, leading to
+inevitable tiebreaks. If a player like Isner could somehow give up a
+small amount of effectiveness on his serve and <em>gain</em> some
+returning skill, would it help him win more matches?</p>
 </div>
 
 
