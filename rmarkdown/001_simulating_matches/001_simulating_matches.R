@@ -8,7 +8,7 @@ source("load_data.R")
 
 # data for actual matches, convert to player-centric
 rm(player.data,seedings.data,tourney.data,dir)
-stats <- Data[,.(tourney_name,tourney_date,winner_name,loser_name,score,w_svpt,w_1stWon,w_2ndWon,l_svpt,l_1stWon,l_2ndWon)
+stats <- Data[,.(tourney_name,tourney_date,winner_name,loser_name,score,w_SvGms,w_bpSaved,w_bpFaced,l_SvGms,l_bpSaved,l_bpFaced,w_svpt,w_1stWon,w_2ndWon,l_svpt,l_1stWon,l_2ndWon)
               ][,`:=`(
                   w_sv = (w_1stWon + w_2ndWon)/w_svpt,
                   l_sv = (l_1stWon + l_2ndWon)/l_svpt)
@@ -18,7 +18,7 @@ stats <- Data[,.(tourney_name,tourney_date,winner_name,loser_name,score,w_svpt,w
                   ][,`:=`(
                     w_diff = w_sv - w_rt,
                     l_diff = l_sv - l_rt)
-                    ][,.(tourney_name,tourney_date,winner_name,loser_name,score,w_sv,w_rt,w_diff,l_sv,l_rt,l_diff)]
+                    ][,.(tourney_name,tourney_date,winner_name,loser_name,score,w_SvGms,w_bpSaved,w_bpFaced,l_SvGms,l_bpSaved,l_bpFaced,w_sv,w_rt,w_diff,l_sv,l_rt,l_diff)]
 
 # remove matches that ended in retirement or were walkovers, and matches without stats
 stats <- stats[!(substr(score,nchar(score)-2,nchar(score))  %in% c('RET','W/O')),]
@@ -39,9 +39,8 @@ rm(list=ls())
 source('/Users/williammunn/Documents/Github/tennis/functions/simulate_match.R')
 
 # show that play.point is eventually right
-outcomes <- sapply(1:1000, function(x) play.point("P1",0.8))
-win_percent <- sum(outcomes == "P1")/length(outcomes)
-percent(win_percent)
+outcomes <- sapply(1:1000, function(x) play.game("P1",0.75)[[1]])
+sum(outcomes == "P1")/length(outcomes)
 
 # average number of points in a match since 2000
 matchlength <- Data[!(substr(score,nchar(score)-2,nchar(score))  %in% c('RET','W/O')),][best_of == '3',]
@@ -93,10 +92,33 @@ deuces <- sapply(1:1000, function(x) {
 mean(deuces)
 # 7.6
 
+# john isner's % of points won on serve in 2021
+stats[(winner_name == 'John Isner' | loser_name == 'John Isner'),
+][,sv := ifelse(winner_name == 'John Isner',w_sv,l_sv)][,.(mean(sv),.N), by = year(tourney_date)]
+
 # probability of winning a game given different % service points won
-#ntimes <- 1000
-#winners <- sapply(1:ntimes,function(x) {play.game("P1",0.8)[[1]]})
-#sum(winners=="P1")/length(winners)
+winners <- sapply(1:1000,function(x) {play.game("P1",0.75)[[1]]})
+sum(winners=="P1")/length(winners)
+
+# Isner's actual % of sv games won
+stats[(winner_name == 'John Isner' | loser_name == 'John Isner') & year(tourney_date) == 2022,
+][,`:=`(
+  w_svgames_won = w_SvGms - w_bpFaced + w_bpSaved,
+  l_svgames_won = l_SvGms - l_bpFaced + l_bpSaved)
+  ][, `:=`(
+  svgames_won = ifelse(winner_name == 'John Isner',w_svgames_won,l_svgames_won),
+  svgames = ifelse(winner_name == 'John Isner', w_SvGms, l_SvGms))
+  ][,lapply(.SD,sum),.SDcols=c("svgames","svgames_won")]
+
+# simulated probability of holding serve
+serve_pct <- rep(c(0.1,0.25,0.5,0.75,0.9),1000)
+outcomes <- sapply(serve_pct,function(x) play.game("P1",x)[[1]])
+data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner=="P1")/.N),by=points_pct]
+
+# 65% of points won
+serve_pct <- rep(0.7,1000)
+outcomes <- sapply(serve_pct,function(x) play.game("P1",x)[[1]])
+data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner=="P1")/.N),by=points_pct]
 
 # record how the result changes with respect to number of simulatons
 #ntimes <- 2000

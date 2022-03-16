@@ -80,3 +80,22 @@ All of which is to say that these tennis-playing R functions are good for confir
 
 It's clearly helpful if you can serve with the kind of effectiveness that we've come to expect from Isner, Opelka, Kyrgios *et al*, but these serve-centric players often have little to no return game. They might win almost every service game, but equally, they'll hardly ever make inroads against even moderately-serving opponents, leading to inevitable tiebreaks. If a player like Isner could somehow give up a small amount of effectiveness on his serve and *gain* some returning skill, would it help him win more matches?
 
+When I wrote this article, Isner had played 10 matches in 2022, but had averaged 75% of service points won - higher than any other season (his next best effort of 74.7% was in 2019). According to the computer, a player with these numbers can expect to win more than 95% of his service games. So far this season, Isner has held serve 149 out of 156 times, which agrees with the model.
+
+It shouldn't come as a surprise that winning three-quarters of points on serve amounts to a nearly unbreakable serve. After all, a game simply amounts to a bunch of service points. When you're winning three-quarters of those individual points, an opponent has a nearly zero chance of stringing together the minimum of four points *against* the server that are required for a break of serve. If more than four points was required to win a game, the effect would be even stronger.
+
+The opposite is true for a player who wins less than 50% of points on serve - they pay the price in terms of their percentage of service games held.
+
+And, as for a player than wins exactly half their points on serve, we'd expect them to hold serve exactly half the time, as well. This snippet of code, and the table it produces, illustrates simalated probabilities of holding serve:
+
+```{r}
+# simulated probability of holding serve
+serve_pct <- rep(c(0.1,0.25,0.5,0.75,0.9),1000)
+outcomes <- sapply(serve_pct,function(x) play.game("P1",x)[[1]])
+data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner=="P1")/.N),by=points_pct]
+```
+
+By the time a player gets to a very high percentage of service points won, the marginal gain from serving a little better, or a little worse, is small. In the case of Isner, with his numbers of 75%, the trade-off is around 1:1. With a 5% drop is service *points* won, he'd see about an equivalent drop in service *games* won - surprisingly. So, maybe it's worth keeping up his serving practise, after all.
+
+What about Isner's return game? 
+
