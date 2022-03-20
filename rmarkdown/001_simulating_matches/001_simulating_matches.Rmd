@@ -47,7 +47,7 @@ win_percent <- sum(outcomes == "P1")/length(outcomes)
 percent(win_percent)
 ```
 
-Next up are basically a bunch of logical extensions to our simulations: we can play games using `play.game()`, sets using `play.set()`, and matches using `play.match`. You can even get R to play a single tiebreak using `play.tiebreak()`. These functions rely on each other, just like in an actual game, set, or match of tennis.
+Next up are basically a bunch of logical extensions to help us get to simulate matches: we can play games using `play.game()`, sets using `play.set()`, and matches using `play.match`. You can even get R to play a single tiebreak using `play.tiebreak()`. These functions rely on each other, just like in an actual game, set, or match of tennis.
 
 All functions bar `play.point()` return a list consisting of two outputs. The first is simply the winner of whatever was just played - always either "P1" or "P2". The second is a data framr storing the *outcome* of each point. This is interesting for gathering data about the matches played, and we can use this data to generate statistics - % of points won on serve, break points generated and saved, and so on.
 
@@ -80,7 +80,7 @@ All of which is to say that these tennis-playing R functions are good for confir
 
 It's clearly helpful if you can serve with the kind of effectiveness that we've come to expect from Isner, Opelka, Kyrgios *et al*, but these serve-centric players often have little to no return game. They might win almost every service game, but equally, they'll hardly ever make inroads against even moderately-serving opponents, leading to inevitable tiebreaks. If a player like Isner could somehow give up a small amount of effectiveness on his serve and *gain* some returning skill, would it help him win more matches?
 
-When I wrote this article, Isner had played 10 matches in 2022, but had averaged 75% of service points won - higher than any other season (his next best effort of 74.7% was in 2019). According to the computer, a player with these numbers can expect to win more than 95% of his service games. So far this season, Isner has held serve 149 out of 156 times, which agrees with the model.
+In 2019, John Isner played 46 matches, and averaged 75% of service points won - higher than any completed season (he's on track to deliver similar results this year). According to the computer, a player with these numbers can expect to win more than 95% of his service games. In the same season, Isner held serve 586 out of 623 times, which is a hair under the predicted value, at 94%.
 
 It shouldn't come as a surprise that winning three-quarters of points on serve amounts to a nearly unbreakable serve. After all, a game simply amounts to a bunch of service points. When you're winning three-quarters of those individual points, an opponent has a nearly zero chance of stringing together the minimum of four points *against* the server that are required for a break of serve. If more than four points was required to win a game, the effect would be even stronger.
 
@@ -95,7 +95,15 @@ outcomes <- sapply(serve_pct,function(x) play.game("P1",x)[[1]])
 data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner=="P1")/.N),by=points_pct]
 ```
 
-By the time a player gets to a very high percentage of service points won, the marginal gain from serving a little better, or a little worse, is small. In the case of Isner, with his numbers of 75%, the trade-off is around 1:1. With a 5% drop is service *points* won, he'd see about an equivalent drop in service *games* won - surprisingly. So, maybe it's worth keeping up his serving practise, after all.
+By the time a player gets to a very high percentage of service points won, the marginal gain from serving a little better, or a little worse, is small. In the case of Isner, with his numbers of 75%, the trade-off is around 1:1. With a 5% drop is service *points* won, he'd see about an equivalent drop in service *games* won - surprisingly. So, maybe it's worth keeping up his serving drills, after all.
 
-What about Isner's return game? 
+What about Isner's return game? In his same matches in 2019 so far, Isner claimed just 30% of his points on return. A player who wins 30% of return points will break his opponent's serve about once every 9 games. What if he could a little better? If Isner could somehow produce a season with an average of 35% of return points won, he would break about once every 6 games - a serious improvement.
+
+To summarise: Isner gives up about 5% of service games, but he *gains* about 7% of return games.
+
+### A change in strategy for Isner
+
+In 2019, Isner returned almost as badly as he served well. But not quite. With serve stats of 75%, and return stats of 30%, he crossed the margin beyond which a player can expect to win matches more often than lose them. This happens when their combined % of points won on serve and return exceeds 100%.
+
+According to the model, in 2019, Isner would have been expected to win about 71% of his best-of-3 matches, and around 75% of his best-of-5 matches (in reality, the numbers he posted were 65% and 50%, but with a small sample size of 46 matches, we wouldn't expect the results to agree).
 

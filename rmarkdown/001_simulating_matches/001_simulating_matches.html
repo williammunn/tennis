@@ -412,9 +412,9 @@ four out of five times. A larger number of simulations shows this:</p>
 outcomes &lt;- sapply(1:10000, function(x) play.point(&quot;P1&quot;,0.8))
 win_percent &lt;- sum(outcomes == &quot;P1&quot;)/length(outcomes)
 percent(win_percent)</code></pre>
-<pre><code>## [1] &quot;80%&quot;</code></pre>
-<p>Next up are basically a bunch of logical extensions to our
-simulations: we can play games using <code>play.game()</code>, sets
+<pre><code>## [1] &quot;81%&quot;</code></pre>
+<p>Next up are basically a bunch of logical extensions to help us get to
+simulate matches: we can play games using <code>play.game()</code>, sets
 using <code>play.set()</code>, and matches using
 <code>play.match</code>. You can even get R to play a single tiebreak
 using <code>play.tiebreak()</code>. These functions rely on each other,
@@ -432,7 +432,7 @@ and so on.</p>
 result &lt;- play.match(3,&quot;P1&quot;,0.8,0.8)
 # winner
 result[[1]]</code></pre>
-<pre><code>## [1] &quot;P1&quot;</code></pre>
+<pre><code>## [1] &quot;P2&quot;</code></pre>
 <pre class="r"><code># first and last few points
 rbind(head(result[[2]],4),tail(result[[2]],4))</code></pre>
 <pre><code>##     point_number server winner game_number tiebreak_ind set_number
@@ -440,12 +440,12 @@ rbind(head(result[[2]],4),tail(result[[2]],4))</code></pre>
 ## 2              2     P1     P1           1        FALSE          1
 ## 3              3     P1     P1           1        FALSE          1
 ## 4              4     P1     P1           1        FALSE          1
-## 199            7     P1     P2           9        FALSE          3
-## 200            6     P1     P1           9        FALSE          3
-## 201            7     P1     P1           9        FALSE          3
-## 202            8     P1     P1           9        FALSE          3</code></pre>
-<p>This best of 3 set match lasted a total of 202 points. It only
-featured 4 games that went to deuce. In fact, after 1,000 matches
+## 110            1     P2     P2          10        FALSE          2
+## 111            2     P2     P2          10        FALSE          2
+## 112            3     P2     P2          10        FALSE          2
+## 113            4     P2     P2          10        FALSE          2</code></pre>
+<p>This best of 3 set match lasted a total of 113 points. It only
+featured 1 games that went to deuce. In fact, after 1,000 matches
 between two strong servers like Isner/Opelka, we only see an average of
 3.2 games go to deuce per match. Compare this to two players with much
 more mediocre serving (or strong returning), like we saw back in
@@ -465,12 +465,12 @@ ever make inroads against even moderately-serving opponents, leading to
 inevitable tiebreaks. If a player like Isner could somehow give up a
 small amount of effectiveness on his serve and <em>gain</em> some
 returning skill, would it help him win more matches?</p>
-<p>When I wrote this article, Isner had played 10 matches in 2022, but
-had averaged 75% of service points won - higher than any other season
-(his next best effort of 74.7% was in 2019). According to the computer,
-a player with these numbers can expect to win more than 95% of his
-service games. So far this season, Isner has held serve 149 out of 156
-times, which agrees with the model.</p>
+<p>In 2019, John Isner played 46 matches, and averaged 75% of service
+points won - higher than any completed season (he’s on track to deliver
+similar results this year). According to the computer, a player with
+these numbers can expect to win more than 95% of his service games. In
+the same season, Isner held serve 586 out of 623 times, which is a hair
+under the predicted value, at 94%.</p>
 <p>It shouldn’t come as a surprise that winning three-quarters of points
 on serve amounts to a nearly unbreakable serve. After all, a game simply
 amounts to a bunch of service points. When you’re winning three-quarters
@@ -491,17 +491,37 @@ outcomes &lt;- sapply(serve_pct,function(x) play.game(&quot;P1&quot;,x)[[1]])
 data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner==&quot;P1&quot;)/.N),by=points_pct]</code></pre>
 <pre><code>##    points_pct games_pct
 ## 1:       0.10     0.001
-## 2:       0.25     0.050
-## 3:       0.50     0.511
-## 4:       0.75     0.940
-## 5:       0.90     1.000</code></pre>
+## 2:       0.25     0.062
+## 3:       0.50     0.486
+## 4:       0.75     0.953
+## 5:       0.90     0.998</code></pre>
 <p>By the time a player gets to a very high percentage of service points
 won, the marginal gain from serving a little better, or a little worse,
 is small. In the case of Isner, with his numbers of 75%, the trade-off
 is around 1:1. With a 5% drop is service <em>points</em> won, he’d see
 about an equivalent drop in service <em>games</em> won - surprisingly.
-So, maybe it’s worth keeping up his serving practise, after all.</p>
-<p>What about Isner’s return game?</p>
+So, maybe it’s worth keeping up his serving drills, after all.</p>
+<p>What about Isner’s return game? In his same matches in 2019 so far,
+Isner claimed just 30% of his points on return. A player who wins 30% of
+return points will break his opponent’s serve about once every 9 games.
+What if he could a little better? If Isner could somehow produce a
+season with an average of 35% of return points won, he would break about
+once every 6 games - a serious improvement.</p>
+<p>To summarise: Isner gives up about 5% of service games, but he gains
+about 7% in <em>return</em> games.</p>
+</div>
+<div id="a-change-in-strategy-for-isner" class="section level3">
+<h3>A change in strategy for Isner</h3>
+<p>In 2019, Isner returned almost as badly as he served well. But not
+quite. With serve stats of 75%, and return stats of 30%, he crossed the
+margin beyond which a player can expect to win matches more often than
+lose them. This happens when their combined % of points won on serve and
+return exceeds 100%.</p>
+<p>According to the model, in 2019, Isner would have been expected to
+win about 71% of his best-of-3 matches, and around 75% of his best-of-5
+matches (in reality, the numbers he posted were 65% and 50%, but with a
+small sample size of 46 matches, we wouldn’t expect the results to
+agree).</p>
 </div>
 
 
