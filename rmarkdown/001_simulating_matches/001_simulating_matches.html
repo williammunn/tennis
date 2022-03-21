@@ -412,7 +412,7 @@ four out of five times. A larger number of simulations shows this:</p>
 outcomes &lt;- sapply(1:10000, function(x) play.point(&quot;P1&quot;,0.8))
 win_percent &lt;- sum(outcomes == &quot;P1&quot;)/length(outcomes)
 percent(win_percent)</code></pre>
-<pre><code>## [1] &quot;81%&quot;</code></pre>
+<pre><code>## [1] &quot;80%&quot;</code></pre>
 <p>Next up are basically a bunch of logical extensions to help us get to
 simulate matches: we can play games using <code>play.game()</code>, sets
 using <code>play.set()</code>, and matches using
@@ -440,12 +440,12 @@ rbind(head(result[[2]],4),tail(result[[2]],4))</code></pre>
 ## 2              2     P1     P1           1        FALSE          1
 ## 3              3     P1     P1           1        FALSE          1
 ## 4              4     P1     P1           1        FALSE          1
-## 110            1     P2     P2          10        FALSE          2
-## 111            2     P2     P2          10        FALSE          2
-## 112            3     P2     P2          10        FALSE          2
-## 113            4     P2     P2          10        FALSE          2</code></pre>
-<p>This best of 3 set match lasted a total of 113 points. It only
-featured 1 games that went to deuce. In fact, after 1,000 matches
+## 138            8     P1     P1          13         TRUE          2
+## 139            9     P1     P1          13         TRUE          2
+## 140           10     P2     P2          13         TRUE          2
+## 141           11     P2     P2          13         TRUE          2</code></pre>
+<p>This best of 3 set match lasted a total of 141 points. It only
+featured 0 games that went to deuce. In fact, after 1,000 matches
 between two strong servers like Isner/Opelka, we only see an average of
 3.2 games go to deuce per match. Compare this to two players with much
 more mediocre serving (or strong returning), like we saw back in
@@ -491,37 +491,47 @@ outcomes &lt;- sapply(serve_pct,function(x) play.game(&quot;P1&quot;,x)[[1]])
 data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner==&quot;P1&quot;)/.N),by=points_pct]</code></pre>
 <pre><code>##    points_pct games_pct
 ## 1:       0.10     0.001
-## 2:       0.25     0.062
-## 3:       0.50     0.486
-## 4:       0.75     0.953
-## 5:       0.90     0.998</code></pre>
+## 2:       0.25     0.055
+## 3:       0.50     0.507
+## 4:       0.75     0.934
+## 5:       0.90     0.994</code></pre>
 <p>By the time a player gets to a very high percentage of service points
 won, the marginal gain from serving a little better, or a little worse,
-is small. In the case of Isner, with his numbers of 75%, the trade-off
-is around 1:1. With a 5% drop is service <em>points</em> won, he’d see
-about an equivalent drop in service <em>games</em> won - surprisingly.
-So, maybe it’s worth keeping up his serving drills, after all.</p>
+is small. In actual fact, even Isner isn’t quite <em>that</em> good.
+While a 5% improvement of servie points won would earn him a 3.5%
+improvement in service games won, a corresponding 5% <em>drop</em> in
+service points won would cost him roughly 5% of service games.</p>
 <p>What about Isner’s return game? In his same matches in 2019 so far,
 Isner claimed just 30% of his points on return. A player who wins 30% of
 return points will break his opponent’s serve about once every 9 games.
 What if he could a little better? If Isner could somehow produce a
 season with an average of 35% of return points won, he would break about
-once every 6 games - a serious improvement.</p>
-<p>To summarise: Isner gives up about 5% of service games, but he gains
-about 7% in <em>return</em> games.</p>
+once every 6 games.</p>
+<p>To summarise: under this proposed scenario, Isner gives up about 5%
+of service games, but he <em>gains</em> about 6% of return games.</p>
 </div>
 <div id="a-change-in-strategy-for-isner" class="section level3">
-<h3>A change in strategy for Isner</h3>
+<h3>A change in strategy for Isner?</h3>
 <p>In 2019, Isner returned almost as badly as he served well. But not
 quite. With serve stats of 75%, and return stats of 30%, he crossed the
 margin beyond which a player can expect to win matches more often than
 lose them. This happens when their combined % of points won on serve and
 return exceeds 100%.</p>
 <p>According to the model, in 2019, Isner would have been expected to
-win about 71% of his best-of-3 matches, and around 75% of his best-of-5
-matches (in reality, the numbers he posted were 65% and 50%, but with a
-small sample size of 46 matches, we wouldn’t expect the results to
-agree).</p>
+win about 72% of his best-of-3 matches, and around 73% of his best-of-5
+matches. In reality, the numbers he posted were 65% and 50%, but with a
+relatively small sample size of 46 matches, we wouldn’t necessarily
+expect the results to agree.</p>
+<p>R code that can generate this result is show below:</p>
+<pre class="r"><code># theoretical % of matches won with 75% / 30% attributes
+winners &lt;- sapply(1:1000,function(x) {play.match(3,&quot;P1&quot;,0.75,0.70)[[1]]}) # best of 3 sets
+sum(winners==&quot;P1&quot;)/length(winners)</code></pre>
+<pre><code>## [1] 0.707</code></pre>
+<p>We have already seen that by somehow giving up some of his renowned
+serve potency in exchange for more meaningful returning ability, we
+would expect John Isner to win <em>slightly</em> more matches. In fact,
+the model shows he’d only win around 1% more - a pretty marginal gain,
+after all that.</p>
 </div>
 
 

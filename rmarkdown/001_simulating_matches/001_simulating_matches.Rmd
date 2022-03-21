@@ -95,15 +95,26 @@ outcomes <- sapply(serve_pct,function(x) play.game("P1",x)[[1]])
 data.table(points_pct = serve_pct, winner = outcomes)[,.(games_pct = sum(winner=="P1")/.N),by=points_pct]
 ```
 
-By the time a player gets to a very high percentage of service points won, the marginal gain from serving a little better, or a little worse, is small. In the case of Isner, with his numbers of 75%, the trade-off is around 1:1. With a 5% drop is service *points* won, he'd see about an equivalent drop in service *games* won - surprisingly. So, maybe it's worth keeping up his serving drills, after all.
+By the time a player gets to a very high percentage of service points won, the marginal gain from serving a little better, or a little worse, is small. In actual fact, even Isner isn't quite *that* good. While a 5% improvement of servie points won would earn him a 3.5% improvement in service games won, a corresponding 5% *drop* in service points won would cost him roughly 5% of service games. 
 
-What about Isner's return game? In his same matches in 2019 so far, Isner claimed just 30% of his points on return. A player who wins 30% of return points will break his opponent's serve about once every 9 games. What if he could a little better? If Isner could somehow produce a season with an average of 35% of return points won, he would break about once every 6 games - a serious improvement.
+What about Isner's return game? In his same matches in 2019 so far, Isner claimed just 30% of his points on return. A player who wins 30% of return points will break his opponent's serve about once every 9 games. What if he could a little better? If Isner could somehow produce a season with an average of 35% of return points won, he would break about once every 6 games.
 
-To summarise: Isner gives up about 5% of service games, but he *gains* about 7% of return games.
+To summarise: under this proposed scenario, Isner gives up about 5% of service games, but he *gains* about 6% of return games.
 
-### A change in strategy for Isner
+### A change in strategy for Isner?
 
 In 2019, Isner returned almost as badly as he served well. But not quite. With serve stats of 75%, and return stats of 30%, he crossed the margin beyond which a player can expect to win matches more often than lose them. This happens when their combined % of points won on serve and return exceeds 100%.
 
-According to the model, in 2019, Isner would have been expected to win about 71% of his best-of-3 matches, and around 75% of his best-of-5 matches (in reality, the numbers he posted were 65% and 50%, but with a small sample size of 46 matches, we wouldn't expect the results to agree).
+According to the model, in 2019, Isner would have been expected to win about 72% of his best-of-3 matches, and around 73% of his best-of-5 matches. In reality, the numbers he posted were 65% and 50%, but with a relatively small sample size of 46 matches, we wouldn't necessarily expect the results to agree.
+
+R code that can generate this result is show below:
+
+```{r}
+# theoretical % of matches won with 75% / 30% attributes
+winners <- sapply(1:1000,function(x) {play.match(3,"P1",0.75,0.70)[[1]]}) # best of 3 sets
+sum(winners=="P1")/length(winners)
+```
+
+We have already seen that by somehow giving up some of his renowned serve potency in exchange for more meaningful returning ability, we would expect John Isner to win *slightly* more matches. In fact, the model shows he'd only win around 1% more - a pretty marginal gain, after all that.
+
 
