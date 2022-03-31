@@ -297,4 +297,4 @@ play.tiebreak <- function(arg.tiebreak.first.server,arg.tiebreak.p1.serve.pct,ar
 }
 
 # example of a match
-play.match(arg.best.of = 3, arg.match.first.server = 'P1', arg.match.p1.serve.pct = 0.9, arg.match.p2.serve.pct = 0.9)[[2]]
+# play.match(arg.best.of = 3, arg.match.first.server = 'P1', arg.match.p1.serve.pct = 0.9, arg.match.p2.serve.pct = 0.9)[[2]]

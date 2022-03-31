@@ -1,6 +1,4 @@
-# store current directory
-rm(list=ls())
-require(data.table,lubridate)
+require(data.table);require(lubridate)
 setwd('/Users/williammunn/Documents/Github/tennis/Data/')
 
 # load match data
@@ -13,25 +11,25 @@ Data[,`:=`(winner_id = as.character(winner_id),loser_id = as.character(loser_id)
 
 # dictate what variables get assigned to what data
 match.vars <- c('tourney_id','tourney_date','winner_id','loser_id','best_of','score','round','minutes')
-stat.vars <- c('tourney_id','round','w_svpt','w_SvGms','w_1stWon','w_2ndWon','w_bpSaved','w_bpFaced','l_svpt','l_SvGms','l_1stWon','l_2ndWon','l_bpSaved','l_bpFaced')
+stat.vars <- c('tourney_id','winner_id','loser_id','round','w_svpt','w_SvGms','w_1stWon','w_2ndWon','w_bpSaved','w_bpFaced','l_svpt','l_SvGms','l_1stWon','l_2ndWon','l_bpSaved','l_bpFaced')
 tourney.vars <- c('tourney_id','tourney_name','tourney_date','surface','draw_size')
 seed.vars <- c('tourney_id','winner_id','loser_id','winner_seed','loser_seed','round')
 player.vars <- c('winner_id','winner_name','loser_id','loser_name')
 
 # matches
-match.data <- Data[!(round %in% c("BR","ER")),.SD,.SDcols = match.vars][,id := seq_len(.N)] ; setkey(match.data,round)
+match.data <- Data[!(round %in% c("BR","ER")),.SD,.SDcols = match.vars][,match_id := seq_len(.N)] ; setkey(match.data,round)
 sortorderdf <- data.table(round=c("RR","R128","R64","R32","R16","QF","SF","F"),order=1:8) ; setkey(sortorderdf,round)
 match.data <- sortorderdf[match.data][order(tourney_id,order)] ; rm(sortorderdf)
 match.data[,match_num := seq_len(.N), by = .(tourney_id)]
-setkey(match.data,id)
+setkey(match.data,match_id)
 
 # stats per player per match
-stat.data <- Data[!(round %in% c("BR","ER")),.SD,.SDcols = stat.vars][,id := seq_len(.N)]
-setkey(stat.data,id)
-stat.data[match.data, on = 'id', match_num := i.match_num]
+stat.data <- Data[!(round %in% c("BR","ER")),.SD,.SDcols = stat.vars][,match_id := seq_len(.N)]
+setkey(stat.data,match_id)
+stat.data[match.data, on = 'match_id', match_num := i.match_num]
 stat.data <- rbind(
-  stat.data[,.(id,match_num,tourney_id,round,svpts=w_svpt,svgms=w_SvGms,svpts_won=w_1stWon+w_2ndWon,bp_faced=w_bpFaced,bp_saved=w_bpSaved)],
-  stat.data[,.(id,match_num,tourney_id,round,svpts=l_svpt,svgms=l_SvGms,svpts_won=l_1stWon+l_2ndWon,bp_faced=l_bpFaced,bp_saved=l_bpSaved)]
+  stat.data[,.(match_id,match_num,tourney_id,round,winner_id,loser_id,player_id=winner_id,svpts=w_svpt,svgms=w_SvGms,svpts_won=w_1stWon+w_2ndWon,bp_faced=w_bpFaced,bp_saved=w_bpSaved)],
+  stat.data[,.(match_id,match_num,tourney_id,round,winner_id,loser_id,player_id=loser_id,svpts=l_svpt,svgms=l_SvGms,svpts_won=l_1stWon+l_2ndWon,bp_faced=l_bpFaced,bp_saved=l_bpSaved)]
 )[,svgms_won := svgms - (bp_faced - bp_saved)]
 
 # tournaments

@@ -1,8 +1,4 @@
-rm(list=ls())
-
-library(ggplot2)
-library(data.table)
-library(scales)
+require(ggplot2);require(scales);require(data.table)
 
 source('/Users/williammunn/Documents/Github/tennis/functions/load_data.R')
 source('/Users/williammunn/Documents/Github/tennis/functions/simulate_match.R')
