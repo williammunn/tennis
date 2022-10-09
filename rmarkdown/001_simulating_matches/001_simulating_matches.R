@@ -1,4 +1,4 @@
-require(ggplot2);require(scales);require(data.table)
+require(ggplot2);require(scales);require(data.table);require(dplyr)
 
 source('/Users/williammunn/Documents/Github/tennis/functions/load_data.R')
 source('/Users/williammunn/Documents/Github/tennis/functions/simulate_match.R')

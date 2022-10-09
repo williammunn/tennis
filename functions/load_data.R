@@ -1,4 +1,4 @@
-require(data.table);require(lubridate)
+require(data.table);require(lubridate);require(dplyr)
 setwd('/Users/williammunn/Documents/Github/tennis/Data/')
 
 # load match data
