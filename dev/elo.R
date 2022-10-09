@@ -9,7 +9,7 @@ lapply(list(Data,match.data,player.data),setDT)
 match.data <- match.data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
 # subset of data for matches played in 2019
-elo.input.data <- match.data[year(tourney_date) %in% c(2019)]
+elo.input.data <- match.data[year(tourney_date) %in% c(2010:2019)]
 
 # a function that computes the elo points added/subtracted from the winner/loser following one match
 elo.calculate.points <- function(arg.p1,
@@ -83,7 +83,7 @@ temp[,`:=`(
 
 # check output
 player.data[player_name == 'Novak Djokovic',]
-temp[winner_id == '104925' | loser_id == '104925',]
+zzz <- temp[winner_id == '104925' | loser_id == '104925',]
 
 
 
