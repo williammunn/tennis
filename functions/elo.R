@@ -54,36 +54,48 @@ output <- apply(
   temp,
   MARGIN = 1,
   function(x) {
+    # determine indices for winner and loser
+    winner <- which(players==x[4])
+    loser <- which(players==x[5])
     # calculate winner and loser Elo points
     points <- elo.calculate.points(
       arg.p1 = x[4],
       arg.p2 = x[5],
       arg.winner = x[4],
-      arg.p1.matches = matches[which(players==x[4])],
-      arg.p2.matches = matches[which(players==x[5])],
-      arg.prevelo.p1 = elo[which(players==x[4])],
-      arg.prevelo.p2 = elo[which(players==x[5])]
+      arg.p1.matches = matches[winner],
+      arg.p2.matches = matches[loser],
+      arg.prevelo.p1 = elo[winner],
+      arg.prevelo.p2 = elo[loser]
     )
     # update matches count
-    matches[which(players==x[4])] <<- matches[which(players==x[4])] + 1
-    matches[which(players==x[5])] <<- matches[which(players==x[5])] + 1
+    matches[winner] <<- matches[winner] + 1
+    matches[loser] <<- matches[loser] + 1
     # update Elos
-    elo[which(players==x[4])] <<- points[[1]]
-    elo[which(players==x[5])] <<- points[[2]]
+    elo[winner] <<- points[[1]]
+    elo[loser] <<- points[[2]]
     # output
     return(points)
   }
 )
 
 # extract values and put these into the data
-temp[,`:=`(
+temp2 <- temp[,`:=`(
   winner_elo = unlist(output)[c(TRUE,FALSE)],
   loser_elo = unlist(output)[c(FALSE,TRUE)]
 )][order(tourney_date,tourney_id,match_num)]
 
-# check output
-player.data[player_name == 'Novak Djokovic',]
-zzz <- temp[winner_id == '104925' | loser_id == '104925',]
+# sadly we do not know the date of each actual match
+# this means that the best we can do is do store the
+# Elo ratings for each player for the final match of
+# each tournament he/she played in
+# so we will take this match now
 
+# first we need to convert the data to one row per player/match
+temp3 <- rbind(
+  copy(temp2)[,.(tourney_id,tourney_date,match_num,player_id=winner_id,elo=winner_elo)],
+  copy(temp2)[,.(tourney_id,tourney_date,match_num,player_id=loser_id,elo=loser_elo)]
+)[order(player_id,tourney_date,match_num)]
 
+# take last match they played for each tourney_date
+final_match <- temp3[,.SD[.N],by=.(player_id,tourney_date)]
 
