@@ -77,6 +77,8 @@ output <- apply(
     return(points)
   }
 )
+print("Elos calculated")
+
 
 # extract values and put these into the data
 temp2 <- temp[,`:=`(
@@ -97,5 +99,15 @@ temp3 <- rbind(
 )[order(player_id,tourney_date,match_num)]
 
 # take last match they played for each tourney_date
-final_match <- temp3[,.SD[.N],by=.(player_id,tourney_date)]
+final_match <- temp3[,.SD[.N],by=.(player_id,tourney_date)][,match_num := NULL][order(player_id,-tourney_date)]
+
+# from tourney_date to next row tourney_date - 1 day
+# identidy first and last records
+first_last <- final_match[, num_matches := .N, by = .(player_id)][
+  , match_num := seq_len(.N), by = .(player_id)][
+    , first := ifelse(match_num == 1, TRUE, FALSE)][
+      , last := ifelse(match_num == num_matches, TRUE, FALSE)][
+        , lag_elo = lag(elo)]
+
+
 
