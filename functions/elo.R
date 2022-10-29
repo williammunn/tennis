@@ -1,5 +1,5 @@
 rm(list=ls())
-library(lubridate,dplyr,data.table)
+library(dplyr);library(lubridate);library(data.table)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 
 # load tennis data, remove what we don't need
@@ -9,7 +9,7 @@ lapply(list(Data,match.data,player.data),setDT)
 match.data <- match.data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
 # subset of data for matches played in 2019
-elo.input.data <- match.data[year(tourney_date) %in% c(2010:2019)]
+elo.input.data <- match.data[year(tourney_date) %in% c(2000:2019)]
 
 # a function that computes the elo points added/subtracted from the winner/loser following one match
 elo.calculate.points <- function(arg.p1,
@@ -100,14 +100,17 @@ temp3 <- rbind(
 
 # take last match they played for each tourney_date
 final_match <- temp3[,.SD[.N],by=.(player_id,tourney_date)][,match_num := NULL][order(player_id,-tourney_date)]
+final_matc[,tourney_date2 := as.Date(tourney_date,"%y-%m-%d")]
 
 # from tourney_date to next row tourney_date - 1 day
-# identidy first and last records
-first_last <- final_match[, num_matches := .N, by = .(player_id)][
+# identify first and last records
+elo_history <- final_match[, num_matches := .N, by = .(player_id)][
   , match_num := seq_len(.N), by = .(player_id)][
     , first := ifelse(match_num == 1, TRUE, FALSE)][
       , last := ifelse(match_num == num_matches, TRUE, FALSE)][
-        , lag_elo = lag(elo)]
+        , lag_tourney_date := lag(tourney_date)][
+          , from_date := tourney_date][
+            , to_date := as.Date(ifelse(first,as.Date("31dec9999","%d%b%Y"),lag_tourney_date),origin="1970-01-01")][
+              order(player_id,from_date,to_date),.(tourney_id,tourney_date,player_id,from_date,to_date,elo)]
 
-
-
+print("Done!")
