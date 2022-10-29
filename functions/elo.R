@@ -113,4 +113,7 @@ elo_history <- final_match[, num_matches := .N, by = .(player_id)][
             , to_date := as.Date(ifelse(first,as.Date("31dec9999","%d%b%Y"),lag_tourney_date),origin="1970-01-01")][
               order(player_id,from_date,to_date),.(tourney_id,tourney_date,player_id,from_date,to_date,elo)]
 
+# remove working datasets
+rm(list=setdiff(ls(), list("Data","elo_history","match.data","stat.data","player.data","seedings.data")))
+
 print("Done!")
