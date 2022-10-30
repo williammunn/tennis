@@ -108,6 +108,14 @@ z <- sample(y,size=32,replace=F)
 # function
 output <- simulate_tournament("2019-06-01",z)[[2]] # full dataset of tournament
 
+# add on player name
+player <- player.data
+output2 <- sqldf("select a.*, b.player_name as name1, c.player_name as name2, d.player_name as winner_name 
+                 from output a 
+                 left join player b on a.player1 = b.player_id
+                 left join player c on a.player2 = c.player_id
+                 left join player d on a.winner = d.player_id")
+
 # how long to run function 100 times?
 #start_time <- Sys.time()
 #output <- replicate(1000,simulate_tournament("2019-06-01",z)[[1]])

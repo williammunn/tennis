@@ -1,4 +1,4 @@
-library(dplyr);library(lubridate);library(data.table)
+library(dplyr);library(lubridate);library(data.table);library(sqldf)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 
 # load tennis data, remove what we don't need
@@ -108,8 +108,8 @@ elo_history <- final_match[, num_matches := .N, by = .(player_id)][
       , last := ifelse(match_num == num_matches, TRUE, FALSE)][
         , lag_tourney_date := lag(tourney_date)][
           , from_date := tourney_date][
-            , to_date := as.Date(ifelse(first,as.Date("31dec9999","%d%b%Y"),lag_tourney_date),origin="1970-01-01")][
-              order(player_id,from_date,to_date),.(tourney_id,tourney_date,player_id,from_date,to_date,elo)]
+            , to_date := as.Date(ifelse(first, ifelse(tourney_date < as.Date("2018-06-01"),tourney_date,as.Date("31dec9999","%d%b%Y")),lag_tourney_date-1),origin="1970-01-01")][
+              order(player_id,from_date,to_date),.(player_id,from_date,to_date,elo)]
 
 # remove working datasets
 rm(elo.input.data,temp2,temp3,final_match,output,temp,elo,matches,players)
