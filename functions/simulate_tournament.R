@@ -4,6 +4,8 @@ source("load_data.R")
 source("functions.R")
 source("elo.R")
 
+library(extrafont)
+
 simulate_tournament <- function(
   tournament_date,
   player_list
@@ -106,7 +108,7 @@ y <- as.character(x$player_id)
 z <- sample(y,size=32,replace=F)
 
 # function
-#output <- simulate_tournament("2019-06-01",z)[[2]] # full dataset of tournament
+output <- simulate_tournament("2019-06-01",z)[[2]] # full dataset of tournament
 
 # how long to run function 100 times?
 #start_time <- Sys.time()
