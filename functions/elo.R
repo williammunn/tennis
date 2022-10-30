@@ -1,10 +1,8 @@
-rm(list=ls())
 library(dplyr);library(lubridate);library(data.table)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 
 # load tennis data, remove what we don't need
 source("load_data.R")
-rm(list=setdiff(ls(),list('match.data','player.data','Data')))
 lapply(list(Data,match.data,player.data),setDT)
 match.data <- match.data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
@@ -114,6 +112,6 @@ elo_history <- final_match[, num_matches := .N, by = .(player_id)][
               order(player_id,from_date,to_date),.(tourney_id,tourney_date,player_id,from_date,to_date,elo)]
 
 # remove working datasets
-rm(list=setdiff(ls(), list("Data","elo_history","match.data","stat.data","player.data","seedings.data")))
+rm(elo.input.data,temp2,temp3,final_match,output,temp,elo,matches,players)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 print("Done!")

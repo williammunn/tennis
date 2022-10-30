@@ -1,8 +1,8 @@
-rm(list=ls())
 library(dplyr);library(lubridate);library(data.table)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 source("load_data.R")
 source("functions.R")
+source("elo.R")
 
 simulate_tournament <- function(
   tournament_date,
@@ -95,16 +95,21 @@ simulate_tournament <- function(
     }
     
   }
-  
+  # output
   return(list(winners,results_df))
 }
 
 # example of running the function
 # get some players
-#x <- snapshot(elo_history,"2019-06-01")
-#y <- as.character(x$player_id)
-#z <- sample(y,size=32,replace=F)
+x <- snapshot(elo_history,"2019-06-01")
+y <- as.character(x$player_id)
+z <- sample(y,size=32,replace=F)
 
 # function
 #output <- simulate_tournament("2019-06-01",z)[[2]] # full dataset of tournament
 
+# how long to run function 100 times?
+#start_time <- Sys.time()
+#output <- replicate(1000,simulate_tournament("2019-06-01",z)[[1]])
+#end_time <- Sys.time()
+#end_time-start_time
