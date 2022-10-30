@@ -4,8 +4,6 @@ source("load_data.R")
 source("functions.R")
 source("elo.R")
 
-library(extrafont)
-
 simulate_tournament <- function(
   tournament_date,
   player_list
