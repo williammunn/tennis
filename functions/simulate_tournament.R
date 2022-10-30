@@ -1,7 +1,6 @@
 rm(list=ls())
 library(dplyr);library(lubridate);library(data.table)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
-source("elo.R")
 source("load_data.R")
 source("functions.R")
 
@@ -33,14 +32,14 @@ simulate_tournament <- function(
   # insert byes randomly into players and elos vector
   # dataset for results
   results_df <- data.frame(
-    player1 <- as.character(2^rounds),
-    player2 <- as.character(2^rounds),
-    round <- as.character(2^rounds),
-    elo1 <- as.integer(2^rounds),
-    elo2 <- as.integer(2^rounds),
-    winner <- as.character(2^rounds)
+    match_num = numeric(length=(2^rounds)-1),
+    player1 = character(length=(2^rounds)-1),
+    player2 = character(length=(2^rounds)-1),
+    round = numeric(length=(2^rounds)-1),
+    elo1 = numeric(length=(2^rounds)-1),
+    elo2 = numeric(length=(2^rounds)-1),
+    winner = character(length=(2^rounds)-1)
   )
-  setDT(results_df)
   # generate sequences to keep track of who should play who
   for (x in 1:rounds) {
     assign(paste0("id_round",x),rep(1:((2^rounds)/(2^x)),each=(2^x)))
@@ -48,6 +47,7 @@ simulate_tournament <- function(
   # need temp vectors for players and elos that can reduce in size
   players_tmp <- players
   elos_tmp <- elos
+  matches_played <- 0
   # play matches for each round
   for (round in 1:rounds) {
     # make life easier
@@ -71,14 +71,16 @@ simulate_tournament <- function(
     }
     # update rows in the results_df data frame
     for (i in 1:length(outcomes)) {
-      results_df$player1[i] <- ids1[i]
-      results_df$player2[i] <- ids2[i]
-      results_df$round[i] <- round
-      results_df$elo1[i] <- elos1[i]
-      results_df$elo2[i] <- elos2[i]
-      results_df$winner[i] <- winners[i]
+      results_df$match_num[matches_played+i] <- matches_played+i
+      results_df$player1[matches_played+i] <- ids1[i]
+      results_df$player2[matches_played+i] <- ids2[i]
+      results_df$round[matches_played+i] <- round
+      results_df$elo1[matches_played+i] <- elos1[i]
+      results_df$elo2[matches_played+i] <- elos2[i]
+      results_df$winner[matches_played+i] <- winners[i]
     }
-    
+    # how many matches have now been player in total?
+    matches_played <- matches_played + length(outcomes)
     # players_tmp and elos_tmp get reduced to reflect only winners
     elos_tmp <- elos_tmp[players_tmp %in% winners]
     players_tmp <- players_tmp[players_tmp %in% winners]
@@ -94,27 +96,15 @@ simulate_tournament <- function(
     
   }
   
-  return(reuslts_df)
+  return(list(winners,results_df))
 }
 
+# example of running the function
 # get some players
-x <- snapshot(elo_history,"2019-06-01")
-y <- as.character(x$player_id)
-z <- sample(y,size=32,replace=F)
+#x <- snapshot(elo_history,"2019-06-01")
+#y <- as.character(x$player_id)
+#z <- sample(y,size=32,replace=F)
 
 # function
-simulate_tournament("2019-06-01",z)
+#output <- simulate_tournament("2019-06-01",z)[[2]] # full dataset of tournament
 
-
-
-rounds <- 5
-s <- 2
-assign(paste0("id_round",s),rep(1:((2^rounds)/(2^s)),each=(2^s)))
-id_round2
-tmp <- c(1,NA,1,NA,NA,NA,2,2,NA,3,3,NA,4,4,NA,NA,NA,NA,5,5,6,NA,NA,6,7,NA,NA,7,8,NA,8,NA)
-duplicated(rm.na(id_round1))
-
-
-x1 <- 5
-x2 <- "x1"
-get(x2)
