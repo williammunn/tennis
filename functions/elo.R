@@ -4,7 +4,7 @@ setwd("/Users/williammunn/Documents/Github/tennis/functions")
 
 # load tennis data, remove what we don't need
 source("load_data.R")
-rm(list=setdiff(ls(),'match.data','player.data'))
+rm(list=setdiff(ls(),list('match.data','player.data','Data')))
 lapply(list(Data,match.data,player.data),setDT)
 match.data <- match.data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
@@ -100,7 +100,7 @@ temp3 <- rbind(
 
 # take last match they played for each tourney_date
 final_match <- temp3[,.SD[.N],by=.(player_id,tourney_date)][,match_num := NULL][order(player_id,-tourney_date)]
-final_matc[,tourney_date2 := as.Date(tourney_date,"%y-%m-%d")]
+final_match[,tourney_date2 := as.Date(tourney_date,"%y-%m-%d")]
 
 # from tourney_date to next row tourney_date - 1 day
 # identify first and last records
@@ -115,5 +115,5 @@ elo_history <- final_match[, num_matches := .N, by = .(player_id)][
 
 # remove working datasets
 rm(list=setdiff(ls(), list("Data","elo_history","match.data","stat.data","player.data","seedings.data")))
-
+setwd("/Users/williammunn/Documents/Github/tennis/functions")
 print("Done!")

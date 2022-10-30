@@ -54,5 +54,6 @@ player.data2 <- rbind(
 player.data <- player.data2
 rm(player.data2,player.vars)
 
+setwd("/Users/williammunn/Documents/Github/tennis/functions")
 print('All data loaded')
 
