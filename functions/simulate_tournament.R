@@ -1,3 +1,4 @@
+rm(list=ls())
 library(dplyr);library(lubridate);library(data.table);library(sqldf)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 source("load_data.R")
@@ -106,7 +107,7 @@ y <- as.character(x$player_id)
 z <- sample(y,size=32,replace=F)
 
 # function
-output <- simulate_tournament("2019-06-01",z)[[2]] # full dataset of tournament
+output <- simulate_tournament("2022-01-01",z)[[2]] # full dataset of tournament
 
 # add on player name
 player <- player.data

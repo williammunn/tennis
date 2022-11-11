@@ -7,7 +7,7 @@ lapply(list(Data,match.data,player.data),setDT)
 match.data <- match.data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
 # subset of data for matches played in 2019
-elo.input.data <- match.data[year(tourney_date) %in% c(2000:2019)]
+elo.input.data <- match.data[year(tourney_date) %in% c(2000:2022)]
 
 # a function that computes the elo points added/subtracted from the winner/loser following one match
 elo.calculate.points <- function(arg.p1,
