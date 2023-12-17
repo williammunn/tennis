@@ -76,7 +76,11 @@ play_match <- function(arg_best_of,
 }
 
 # define play_set
-play_set <- function(arg_set_first_server,arg_set_p1_serve_pct,arg_set_p2_serve_pct,arg_set_inherit = FALSE,arg_set_inherited_score = NULL) {
+play_set <- function(arg_set_first_server,
+                     arg_set_p1_serve_pct,
+                     arg_set_p2_serve_pct,
+                     arg_set_inherit = FALSE,
+                     arg_set_inherited_score = NULL) {
   # initial values
   set_over <- FALSE
   p1_games <- 0
@@ -170,7 +174,10 @@ play_set <- function(arg_set_first_server,arg_set_p1_serve_pct,arg_set_p2_serve_
 }
 
 # define play_game
-play_game <- function(arg_game_server,arg_game_serve_pct,arg_game_inherit = FALSE,arg_game_inherited_score = NULL) {
+play_game <- function(arg_game_server,
+                      arg_game_serve_pct,
+                      arg_game_inherit = FALSE,
+                      arg_game_inherited_score = NULL) {
   # initial values
   p1_points <- 0
   p2_points <- 0
@@ -222,7 +229,8 @@ play_game <- function(arg_game_server,arg_game_serve_pct,arg_game_inherit = FALS
 }
 
 # define play_point
-play_point <- function(arg_point_server, arg_point_serve_pct) {
+play_point <- function(arg_point_server,
+                       arg_point_serve_pct) {
   # generate random number
   random_number <- runif(1)
   # determine winner of point
@@ -241,7 +249,11 @@ play_point <- function(arg_point_server, arg_point_serve_pct) {
   }
 }
 
-play_tiebreak <- function(arg_tiebreak_first_server,arg_tiebreak_p1_serve_pct,arg_tiebreak_p2_serve_pct,arg_tiebreak_inherit=FALSE,arg_tiebreak_inherited_score=NULL) {
+play_tiebreak <- function(arg_tiebreak_first_server,
+                          arg_tiebreak_p1_serve_pct,
+                          arg_tiebreak_p2_serve_pct,
+                          arg_tiebreak_inherit=FALSE,
+                          arg_tiebreak_inherited_score=NULL) {
   # initial values
   tiebreak_over <- FALSE
   tiebreak_current_server <- arg_tiebreak_first_server
