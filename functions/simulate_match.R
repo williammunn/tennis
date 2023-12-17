@@ -1,30 +1,35 @@
-# define play.match
-play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct,arg.match.p2.serve.pct,arg.match.inherit = FALSE,arg.match.inherited.score = NULL) {
+# define play_match
+play_match <- function(arg_best_of,
+                       arg_match_first_server,
+                       arg_match_p1_serve_pct,
+                       arg_match_p2_serve_pct,
+                       arg_match_inherit = FALSE,
+                       arg_match_inherited_score = NULL) {
   # initial values
-  match.over <- FALSE
-  current.server <- arg.match.first.server
-  p1.sets <- 0
-  p2.sets <- 0
-  sets.played <- sum(p1.sets,p2.sets)
-  current.server <- arg.match.first.server
-  current.server.pct <- ifelse(arg.match.first.server == 'P1', arg.match.p1.serve.pct, arg.match.p2.serve.pct)
-  set.winner <- ''
-  inherit.set <- FALSE
+  match_over <- FALSE
+  current_server <- arg_match_first_server
+  p1_sets <- 0
+  p2_sets <- 0
+  sets_played <- sum(p1_sets,p2_sets)
+  current_server <- arg_match_first_server
+  current_server_pct <- ifelse(arg_match_first_server == 'P1', arg_match_p1_serve_pct, arg_match_p2_serve_pct)
+  set_winner <- ''
+  inherit_set <- FALSE
   # inherited
-  if (arg.match.inherit) {
-    inherited.score <- convert.score(arg.match.inherited.score)
-    p1.sets <- inherited.score[["p1.sets"]]
-    p2.sets <- inherited.score[["p2.sets"]]
-    inherit.set <- TRUE
+  if (arg_match_inherit) {
+    inherited_score <- convert_score(arg_match_inherited_score)
+    p1_sets <- inherited_score[["p1_sets"]]
+    p2_sets <- inherited_score[["p2_sets"]]
+    inherit_set <- TRUE
   }
   # create dataframe to hold the score
-  points.df <- data.frame(
+  points_df <- data.frame(
     point = numeric(),
     server = character(),
     winner = character()
   )
   # this function additionally outputs a data frame with the results of each point
-  match.df <- data.frame(
+  match_df <- data.frame(
     set_number <- numeric(),
     game_number <- numeric(),
     point_number <- numeric(),
@@ -33,64 +38,64 @@ play.match <- function(arg.best.of,arg.match.first.server,arg.match.p1.serve.pct
     tiebreak_ind <- logical()
   )
   # play sets until the match is over
-  while(match.over == FALSE) {
-    set.object <- play.set(arg.set.first.server = current.server, arg.set.p1.serve.pct = arg.match.p1.serve.pct, arg.set.p2.serve.pct = arg.match.p2.serve.pct, arg.set.inherit = inherit.set, arg.set.inherited.score = arg.match.inherited.score)
+  while(match_over == FALSE) {
+    set_object <- play_set(arg_set_first_server = current_server, arg_set_p1_serve_pct = arg_match_p1_serve_pct, arg_set_p2_serve_pct = arg_match_p2_serve_pct, arg_set_inherit = inherit_set, arg_set_inherited_score = arg_match_inherited_score)
     # immediately switch off the inherited switch, so that any future sets start at 0-0
-    inherit.set <- FALSE
-    set.winner <- set.object[[1]]
-    set.df <- set.object[[2]]
-    set.last.server <- set.object[[3]]
+    inherit_set <- FALSE
+    set_winner <- set_object[[1]]
+    set_df <- set_object[[2]]
+    set_last_server <- set_object[[3]]
     # swap server, based on who served in the final non-tiebreak game of the previous set
-    current.server <- ifelse(set.last.server == 'P1','P2','P1')
+    current_server <- ifelse(set_last_server == 'P1','P2','P1')
     # increment number of sets played
-    sets.played <- sets.played + 1
+    sets_played <- sets_played + 1
     # increment the set winner's count
-    if (set.winner == 'P1') {
-      p1.sets <- p1.sets + 1
+    if (set_winner == 'P1') {
+      p1_sets <- p1_sets + 1
     } else {
-      p2.sets <- p2.sets + 1
+      p2_sets <- p2_sets + 1
     }
-    # update the match.df object
-    set.df['set_number'] <- p1.sets + p2.sets
-    match.df <- rbind(
-      match.df,
-      set.df
+    # update the match_df object
+    set_df['set_number'] <- p1_sets + p2_sets
+    match_df <- rbind(
+      match_df,
+      set_df
     )
     # check if match is over
-    if (p1.sets == ceiling(arg.best.of/2) | p2.sets == ceiling(arg.best.of/2)) {
-      match.over <- TRUE
+    if (p1_sets == ceiling(arg_best_of/2) | p2_sets == ceiling(arg_best_of/2)) {
+      match_over <- TRUE
     }
   }
   # determine winner
-  if (p1.sets > p2.sets) {
-    match.winner <- 'P1'
+  if (p1_sets > p2_sets) {
+    match_winner <- 'P1'
   } else {
-    match.winner <- 'P2'
+    match_winner <- 'P2'
   }
-  return(list(match.winner,match.df))
+  return(list(match_winner,match_df))
 }
 
-# define play.set
-play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.pct,arg.set.inherit = FALSE,arg.set.inherited.score = NULL) {
+# define play_set
+play_set <- function(arg_set_first_server,arg_set_p1_serve_pct,arg_set_p2_serve_pct,arg_set_inherit = FALSE,arg_set_inherited_score = NULL) {
   # initial values
-  set.over <- FALSE
-  p1.games <- 0
-  p2.games <- 0
+  set_over <- FALSE
+  p1_games <- 0
+  p2_games <- 0
   tiebreak <- FALSE
-  current.server <- arg.set.first.server
-  set.most.recent.server <- current.server
-  inherit.game <- FALSE
+  current_server <- arg_set_first_server
+  set_most_recent_server <- current_server
+  inherit_game <- FALSE
   # inherit
-  if (arg.set.inherit) {
-    inherited.score <- convert.score(arg.set.inherited.score)
-    p1.games <- inherited.score[["p1.games"]]
-    p2.games <- inherited.score[["p2.games"]]
-    tiebreak <- inherited.score[["tiebreak.ind"]]
-    current.server <- arg.set.inherited.server
-    inherit.game <- TRUE
+  if (arg_set_inherit) {
+    inherited_score <- convert_score(arg_set_inherited_score)
+    p1_games <- inherited_score[["p1_games"]]
+    p2_games <- inherited_score[["p2_games"]]
+    tiebreak <- inherited_score[["tiebreak_ind"]]
+    current_server <- arg_set_inherited_server
+    inherit_game <- TRUE
   }
   # this function additionally outputs a data frame with the results of each point
-  set.df <- data.frame(
+  set_df <- data.frame(
     game_number <- numeric(),
     point_number <- numeric(),
     server <- character(),
@@ -98,203 +103,203 @@ play.set <- function(arg.set.first.server,arg.set.p1.serve.pct,arg.set.p2.serve.
     tiebreak_ind <- logical()
   )
   # play games until the set is over
-  while(set.over == FALSE) {
+  while(set_over == FALSE) {
     if (!tiebreak) {
       # play a game
-      game.object <- play.game(arg.game.server = current.server, arg.game.serve.pct = ifelse(current.server == 'P1', arg.set.p1.serve.pct, arg.set.p2.serve.pct), arg.game.inherit = inherit.game, arg.game.inherited.score = arg.set.inherited.score)
+      game_object <- play_game(arg_game_server = current_server, arg_game_serve_pct = ifelse(current_server == 'P1', arg_set_p1_serve_pct, arg_set_p2_serve_pct), arg_game_inherit = inherit_game, arg_game_inherited_score = arg_set_inherited_score)
       # immediately switch off the inherited switch, so that any future games start at 0-0
-      inherit.game <- FALSE
+      inherit_game <- FALSE
       # retrieve the winner of the game
-      game.winner <- game.object[[1]]
-      # retrieve the game.df object that shows the points played in the game just played
-      game.df <- game.object[[2]]
+      game_winner <- game_object[[1]]
+      # retrieve the game_df object that shows the points played in the game just played
+      game_df <- game_object[[2]]
       # update the most recent server variable
-      set.most.recent.server <- current.server
+      set_most_recent_server <- current_server
       # award winner a game
-      if (game.winner == 'P1') {
-        p1.games <- p1.games + 1
+      if (game_winner == 'P1') {
+        p1_games <- p1_games + 1
       } else {
-        p2.games <- p2.games + 1
+        p2_games <- p2_games + 1
       }
       # check if set is over
-      if((p1.games == 6 & p2.games <= 4) | (p2.games == 6 & p1.games <= 4) | p1.games == 7 | p2.games == 7) {
-        set.over <- TRUE
+      if((p1_games == 6 & p2_games <= 4) | (p2_games == 6 & p1_games <= 4) | p1_games == 7 | p2_games == 7) {
+        set_over <- TRUE
       }
-      # update the set.df data frame
-      game.df['game_number'] <- p1.games + p2.games
-      game.df['tiebreak_ind'] <- tiebreak
-      set.df <- rbind(
-        set.df,
-        game.df
+      # update the set_df data frame
+      game_df['game_number'] <- p1_games + p2_games
+      game_df['tiebreak_ind'] <- tiebreak
+      set_df <- rbind(
+        set_df,
+        game_df
       )
       # swap server
-      current.server = ifelse(current.server == 'P1','P2','P1')
+      current_server = ifelse(current_server == 'P1','P2','P1')
       # check if tiebreak needed
-      if (p1.games == 6 & p2.games == 6) {
+      if (p1_games == 6 & p2_games == 6) {
         tiebreak <- TRUE
       }
     }
     if(tiebreak) {
-      game.object <- play.tiebreak(arg.tiebreak.first.server = current.server,arg.tiebreak.p1.serve.pct = arg.set.p1.serve.pct,arg.tiebreak.p2.serve.pct = arg.set.p2.serve.pct,arg.tiebreak.inherit = inherit.game,arg.tiebreak.inherited.score = arg.set.inherited.score)
+      game_object <- play_tiebreak(arg_tiebreak_first_server = current_server,arg_tiebreak_p1_serve_pct = arg_set_p1_serve_pct,arg_tiebreak_p2_serve_pct = arg_set_p2_serve_pct,arg_tiebreak_inherit = inherit_game,arg_tiebreak_inherited_score = arg_set_inherited_score)
       # immediately switch off the inherited switch
-      inherit.game <- FALSE
-      game.winner <- game.object[[1]]
-      game.df <- game.object[[2]]
-      set.over <- TRUE
+      inherit_game <- FALSE
+      game_winner <- game_object[[1]]
+      game_df <- game_object[[2]]
+      set_over <- TRUE
       # award winner of tiebreak a game
-      if (game.winner == 'P1') {
-        p1.games <- p1.games + 1
+      if (game_winner == 'P1') {
+        p1_games <- p1_games + 1
       } else {
-        p2.games <- p2.games + 1
+        p2_games <- p2_games + 1
       }
-      # update set.df data frame
-      game.df['game_number'] <- p1.games + p2.games
-      game.df['tiebreak_ind'] <- tiebreak
-      set.df <- rbind(
-        set.df,
-        game.df
+      # update set_df data frame
+      game_df['game_number'] <- p1_games + p2_games
+      game_df['tiebreak_ind'] <- tiebreak
+      set_df <- rbind(
+        set_df,
+        game_df
       )
     }
   }
-  if (p1.games > p2.games) {
-    set.winner <- 'P1'
+  if (p1_games > p2_games) {
+    set_winner <- 'P1'
   } else {
-    set.winner <- 'P2'
+    set_winner <- 'P2'
   }
-  return(list(set.winner,set.df,set.most.recent.server))
+  return(list(set_winner,set_df,set_most_recent_server))
 }
 
-# define play.game
-play.game <- function(arg.game.server,arg.game.serve.pct,arg.game.inherit = FALSE,arg.game.inherited.score = NULL) {
+# define play_game
+play_game <- function(arg_game_server,arg_game_serve_pct,arg_game_inherit = FALSE,arg_game_inherited_score = NULL) {
   # initial values
-  p1.points <- 0
-  p2.points <- 0
-  current.server <- arg.game.server
-  game.over <- FALSE
+  p1_points <- 0
+  p2_points <- 0
+  current_server <- arg_game_server
+  game_over <- FALSE
   # inherit
-  if (arg.game.inherit) {
-    inherited.score <- convert.score(arg.game.inherited.score)
-    p1.points <- inherited.score[["p1.points"]]
-    p2.points <- inherited.score[["p2.points"]]
+  if (arg_game_inherit) {
+    inherited_score <- convert_score(arg_game_inherited_score)
+    p1_points <- inherited_score[["p1_points"]]
+    p2_points <- inherited_score[["p2_points"]]
   }
   # this function additionally outputs a data frame with a record of points and their outcomes
-  game.df <- data.frame(
+  game_df <- data.frame(
     point_number = numeric(),
     server = character(),
     winner = character()
   )
   # play points until the game is over
-  while(game.over == FALSE) {
+  while(game_over == FALSE) {
     # play a point
-    point.winner <- play.point(arg.point.server = current.server, arg.point.serve.pct = arg.game.serve.pct)
+    point_winner <- play_point(arg_point_server = current_server, arg_point_serve_pct = arg_game_serve_pct)
     # increment points of the winner of the point just played
-    if (point.winner == 'P1') {
-      p1.points <- p1.points + 1
+    if (point_winner == 'P1') {
+      p1_points <- p1_points + 1
     } else {
-      p2.points <- p2.points + 1
+      p2_points <- p2_points + 1
     }
-    if (p1.points == 4 & p2.points == 4) {
-      p1.points <- 3
-      p2.points <- 3
+    if (p1_points == 4 & p2_points == 4) {
+      p1_points <- 3
+      p2_points <- 3
     }
-    # add a row to the game.df data frame
-    game.df <- rbind(
-      game.df,
-      data.frame(point_number = p1.points + p2.points, server = arg.game.server, winner = point.winner)
+    # add a row to the game_df data frame
+    game_df <- rbind(
+      game_df,
+      data.frame(point_number = p1_points + p2_points, server = arg_game_server, winner = point_winner)
     )
     # check if the game is over
-    if ((p1.points >= 4 | p2.points >= 4) &
-        (abs(p1.points - p2.points) >= 2)) {
-      game.over <- TRUE
+    if ((p1_points >= 4 | p2_points >= 4) &
+        (abs(p1_points - p2_points) >= 2)) {
+      game_over <- TRUE
     }
   }
-  if (p1.points > p2.points) {
-    game.winner <- 'P1'
+  if (p1_points > p2_points) {
+    game_winner <- 'P1'
   } else {
-    game.winner <- 'P2'
+    game_winner <- 'P2'
   }
-  return(list(game.winner,game.df))
+  return(list(game_winner,game_df))
 }
 
-# define play.point
-play.point <- function(arg.point.server, arg.point.serve.pct) {
+# define play_point
+play_point <- function(arg_point_server, arg_point_serve_pct) {
   # generate random number
-  random.number <- runif(1)
+  random_number <- runif(1)
   # determine winner of point
-  if (arg.point.serve.pct > random.number) {
-    if (arg.point.server == 'P1') {
+  if (arg_point_serve_pct > random_number) {
+    if (arg_point_server == 'P1') {
       return('P1')
-    } else if (arg.point.server == 'P2') {
+    } else if (arg_point_server == 'P2') {
       return('P2')
     }
   } else {
-    if (arg.point.server == 'P1') {
+    if (arg_point_server == 'P1') {
       return('P2')
-    } else if (arg.point.server == 'P2') {
+    } else if (arg_point_server == 'P2') {
       return('P1')
     }
   }
 }
 
-play.tiebreak <- function(arg.tiebreak.first.server,arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct,arg.tiebreak.inherit=FALSE,arg.tiebreak.inherited.score=NULL) {
+play_tiebreak <- function(arg_tiebreak_first_server,arg_tiebreak_p1_serve_pct,arg_tiebreak_p2_serve_pct,arg_tiebreak_inherit=FALSE,arg_tiebreak_inherited_score=NULL) {
   # initial values
-  tiebreak.over <- FALSE
-  tiebreak.current.server <- arg.tiebreak.first.server
-  p1.points <- 0
-  p2.points <- 0
-  tiebreak.serves.remaining <- 1 # first person to serve only serves once
+  tiebreak_over <- FALSE
+  tiebreak_current_server <- arg_tiebreak_first_server
+  p1_points <- 0
+  p2_points <- 0
+  tiebreak_serves_remaining <- 1 # first person to serve only serves once
   # inherit
-  if (arg.tiebreak.inherit) {
-    inherited.score <- convert.score(arg.tiebreak.inherited.score)
-    p1.points <- inherited.score[["p1.points"]]
-    p2.points <- inherited.score[["p2.points"]]
-    tiebreak.server.points.served <- (sum(p1.points,p2.points)%%2) + 1
+  if (arg_tiebreak_inherit) {
+    inherited_score <- convert_score(arg_tiebreak_inherited_score)
+    p1_points <- inherited_score[["p1_points"]]
+    p2_points <- inherited_score[["p2_points"]]
+    tiebreak_server_points_served <- (sum(p1_points,p2_points)%%2) + 1
   }
   # this function additionally outputs a data frame with the outcomes of individual points
-  tiebreak.df <- data.frame(
+  tiebreak_df <- data.frame(
     point_number = numeric(),
     server = character(),
     winner = character()
   )
   # play the remainder of the tiebreak
-  while(tiebreak.over == FALSE) {
+  while(tiebreak_over == FALSE) {
     # play the current server's 2 points
-    while (tiebreak.serves.remaining > 0) {
+    while (tiebreak_serves_remaining > 0) {
       # play the first point on this player's server
-      point.winner <- play.point(arg.point.server = tiebreak.current.server, arg.point.serve.pct = ifelse(tiebreak.current.server == 'P1',arg.tiebreak.p1.serve.pct,arg.tiebreak.p2.serve.pct))
+      point_winner <- play_point(arg_point_server = tiebreak_current_server, arg_point_serve_pct = ifelse(tiebreak_current_server == 'P1',arg_tiebreak_p1_serve_pct,arg_tiebreak_p2_serve_pct))
       # award point to the winner
-      if (point.winner == 'P1') {
-        p1.points <- p1.points + 1
+      if (point_winner == 'P1') {
+        p1_points <- p1_points + 1
       } else {
-        p2.points <- p2.points + 1
+        p2_points <- p2_points + 1
       }
       # increment the points served by this current server
-      tiebreak.serves.remaining <- tiebreak.serves.remaining - 1
-      # update the tiebreak.df object
-      tiebreak.df <- rbind(
-        tiebreak.df,
-        data.frame(point_number = p1.points + p2.points, server = tiebreak.current.server, winner = point.winner)
+      tiebreak_serves_remaining <- tiebreak_serves_remaining - 1
+      # update the tiebreak_df object
+      tiebreak_df <- rbind(
+        tiebreak_df,
+        data.frame(point_number = p1_points + p2_points, server = tiebreak_current_server, winner = point_winner)
       )
       # check if tiebreak should be ended
-      if ((p1.points >= 7 | p2.points >= 7) & (abs(p1.points - p2.points) > 1)) {
-        tiebreak.over <- TRUE
+      if ((p1_points >= 7 | p2_points >= 7) & (abs(p1_points - p2_points) > 1)) {
+        tiebreak_over <- TRUE
         break
       }
     }
     # after the first point players get 2 serves each
-    tiebreak.serves.remaining <- 2
+    tiebreak_serves_remaining <- 2
     # swap server
-    tiebreak.current.server <- ifelse(tiebreak.current.server == "P1","P2","P1")
+    tiebreak_current_server <- ifelse(tiebreak_current_server == "P1","P2","P1")
   }
   # determine who wins the tiebreak
-  if (p1.points > p2.points) {
-    tiebreak.winner <- 'P1'
+  if (p1_points > p2_points) {
+    tiebreak_winner <- 'P1'
   } else {
-    tiebreak.winner <- 'P2'
+    tiebreak_winner <- 'P2'
   }
   # return the winner of the tiebreak
-  return(list(tiebreak.winner,tiebreak.df))
+  return(list(tiebreak_winner,tiebreak_df))
 }
 
 # example of a match
-# play.match(arg.best.of = 3, arg.match.first.server = 'P1', arg.match.p1.serve.pct = 0.9, arg.match.p2.serve.pct = 0.9)[[2]]
+play_match(arg_best_of = 3, arg_match_first_server = 'P1', arg_match_p1_serve_pct = 0.9, arg_match_p2_serve_pct = 0.9)[[1]]
