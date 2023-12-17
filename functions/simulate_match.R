@@ -39,7 +39,11 @@ play_match <- function(arg_best_of,
   )
   # play sets until the match is over
   while(match_over == FALSE) {
-    set_object <- play_set(arg_set_first_server = current_server, arg_set_p1_serve_pct = arg_match_p1_serve_pct, arg_set_p2_serve_pct = arg_match_p2_serve_pct, arg_set_inherit = inherit_set, arg_set_inherited_score = arg_match_inherited_score)
+    set_object <- play_set(arg_set_first_server = current_server, 
+                           arg_set_p1_serve_pct = arg_match_p1_serve_pct, 
+                           arg_set_p2_serve_pct = arg_match_p2_serve_pct, 
+                           arg_set_inherit = inherit_set, 
+                           arg_set_inherited_score = arg_match_inherited_score)
     # immediately switch off the inherited switch, so that any future sets start at 0-0
     inherit_set <- FALSE
     set_winner <- set_object[[1]]
@@ -110,7 +114,10 @@ play_set <- function(arg_set_first_server,
   while(set_over == FALSE) {
     if (!tiebreak) {
       # play a game
-      game_object <- play_game(arg_game_server = current_server, arg_game_serve_pct = ifelse(current_server == 'P1', arg_set_p1_serve_pct, arg_set_p2_serve_pct), arg_game_inherit = inherit_game, arg_game_inherited_score = arg_set_inherited_score)
+      game_object <- play_game(arg_game_server = current_server, 
+                               arg_game_serve_pct = ifelse(current_server == 'P1', arg_set_p1_serve_pct, arg_set_p2_serve_pct), 
+                               arg_game_inherit = inherit_game, 
+                               arg_game_inherited_score = arg_set_inherited_score)
       # immediately switch off the inherited switch, so that any future games start at 0-0
       inherit_game <- FALSE
       # retrieve the winner of the game
@@ -144,7 +151,11 @@ play_set <- function(arg_set_first_server,
       }
     }
     if(tiebreak) {
-      game_object <- play_tiebreak(arg_tiebreak_first_server = current_server,arg_tiebreak_p1_serve_pct = arg_set_p1_serve_pct,arg_tiebreak_p2_serve_pct = arg_set_p2_serve_pct,arg_tiebreak_inherit = inherit_game,arg_tiebreak_inherited_score = arg_set_inherited_score)
+      game_object <- play_tiebreak(arg_tiebreak_first_server = current_server,
+                                   arg_tiebreak_p1_serve_pct = arg_set_p1_serve_pct,
+                                   arg_tiebreak_p2_serve_pct = arg_set_p2_serve_pct,
+                                   arg_tiebreak_inherit = inherit_game,
+                                   arg_tiebreak_inherited_score = arg_set_inherited_score)
       # immediately switch off the inherited switch
       inherit_game <- FALSE
       game_winner <- game_object[[1]]
@@ -198,7 +209,8 @@ play_game <- function(arg_game_server,
   # play points until the game is over
   while(game_over == FALSE) {
     # play a point
-    point_winner <- play_point(arg_point_server = current_server, arg_point_serve_pct = arg_game_serve_pct)
+    point_winner <- play_point(arg_point_server = current_server, 
+                               arg_point_serve_pct = arg_game_serve_pct)
     # increment points of the winner of the point just played
     if (point_winner == 'P1') {
       p1_points <- p1_points + 1
@@ -278,7 +290,8 @@ play_tiebreak <- function(arg_tiebreak_first_server,
     # play the current server's 2 points
     while (tiebreak_serves_remaining > 0) {
       # play the first point on this player's server
-      point_winner <- play_point(arg_point_server = tiebreak_current_server, arg_point_serve_pct = ifelse(tiebreak_current_server == 'P1',arg_tiebreak_p1_serve_pct,arg_tiebreak_p2_serve_pct))
+      point_winner <- play_point(arg_point_server = tiebreak_current_server,
+                                 arg_point_serve_pct = ifelse(tiebreak_current_server == 'P1',arg_tiebreak_p1_serve_pct,arg_tiebreak_p2_serve_pct))
       # award point to the winner
       if (point_winner == 'P1') {
         p1_points <- p1_points + 1
