@@ -1,114 +1,114 @@
 # convert a string representing the score into numeric variables
-convert.score <- function(arg.score.string,arg.completed) {
+convert_score <- function(arg_score_string,arg_completed) {
   
   # initial values
-  p1.games <- 0
-  p2.games <- 0
-  p1.total.games <- 0
-  p2.total.games <- 0
-  p1.total.tiebreaks <- 0
-  p2.total.tiebreaks <- 0
-  p1.points <- 0
-  p2.points <- 0
+  p1_games <- 0
+  p2_games <- 0
+  p1_total_games <- 0
+  p2_total_games <- 0
+  p1_total_tiebreaks <- 0
+  p2_total_tiebreaks <- 0
+  p1_points <- 0
+  p2_points <- 0
   
-  score.indexes <- c(0,sapply(gregexpr(pattern = " ", arg.score.string)[[1]], FUN = function(x) {x+1}))
-  scores <- character(length(score.indexes)-1)
-  for (i in 1:length(score.indexes)) {
-    scores[i] <- substr(arg.score.string,score.indexes[i],ifelse(is.na(score.indexes[i+1]-2),nchar(arg.score.string),score.indexes[i+1]-2))
+  score_indexes <- c(0,sapply(gregexpr(pattern = " ", arg_score_string)[[1]], FUN = function(x) {x+1}))
+  scores <- character(length(score_indexes)-1)
+  for (i in 1:length(score_indexes)) {
+    scores[i] <- substr(arg_score_string,score_indexes[i],ifelse(is.na(score_indexes[i+1]-2),nchar(arg_score_string),score_indexes[i+1]-2))
   } ; rm(i)
   
   # if the match is not completed, the last element of 'scores' won't a set
-  if (!arg.completed) {
-    num.sets <- length(score.indexes)-1
-    num.completed.sets <- num.sets-1
+  if (!arg_completed) {
+    num_sets <- length(score_indexes)-1
+    num_completed_sets <- num_sets-1
   } else{
-    num.sets <- length(score.indexes)
-    num.completed.sets <- num.sets
+    num_sets <- length(score_indexes)
+    num_completed_sets <- num_sets
   }
   
   # function to get the winner of each completed set
-  get.set.winner <- function(arg.set.string) {
-    p1.games <- as.integer(substr(arg.set.string,1,1))
-    p2.games <- as.integer(substr(arg.set.string,3,3))
-    if ((p1.games == 6 & p2.games < 5) | (p1.games == 7)) {
-      return(list("P1",p1.games,p2.games))
-    } else if ((p2.games == 6 & p1.games < 5) | (p2.games == 7)) {
-      return(list("P2",p1.games,p2.games))
+  get_set_winner <- function(arg_set_string) {
+    p1_games <- as_integer(substr(arg_set_string,1,1))
+    p2_games <- as_integer(substr(arg_set_string,3,3))
+    if ((p1_games == 6 & p2_games < 5) | (p1_games == 7)) {
+      return(list("P1",p1_games,p2_games))
+    } else if ((p2_games == 6 & p1_games < 5) | (p2_games == 7)) {
+      return(list("P2",p1_games,p2_games))
     } else {
       return("error")
     }
   }
   
   # retrieve winners of completed sets
-  set.winners <- character(num.completed.sets)
-  if (num.completed.sets > 0) {
-    for (set.num in 1:num.completed.sets) {
-      set.winners[set.num] <- get.set.winner(scores[set.num])[[1]]
-      p1.total.games <- p1.total.games + min(6,get.set.winner(scores[set.num])[[2]])
-      p2.total.games <- p2.total.games + min(6,get.set.winner(scores[set.num])[[3]])
-      p1.total.tiebreaks <- p1.total.tiebreaks + ifelse(get.set.winner(scores[set.num])[[2]]==7,1,0)
-      p2.total.tiebreaks <- p2.total.tiebreaks + ifelse(get.set.winner(scores[set.num])[[3]]==7,1,0)
+  set_winners <- character(num_completed_sets)
+  if (num_completed_sets > 0) {
+    for (set_num in 1:num_completed_sets) {
+      set_winners[set_num] <- get_set_winner(scores[set_num])[[1]]
+      p1_total_games <- p1_total_games + min(6,get_set_winner(scores[set_num])[[2]])
+      p2_total_games <- p2_total_games + min(6,get_set_winner(scores[set_num])[[3]])
+      p1_total_tiebreaks <- p1_total_tiebreaks + ifelse(get_set_winner(scores[set_num])[[2]]==7,1,0)
+      p2_total_tiebreaks <- p2_total_tiebreaks + ifelse(get_set_winner(scores[set_num])[[3]]==7,1,0)
     }
   }
   
   # extract number of completed sets won
-  p1.sets <- sum(set.winners == "P1")
-  p2.sets <- sum(set.winners == "P2")
-  rm(set.num,set.winners)
+  p1_sets <- sum(set_winners == "P1")
+  p2_sets <- sum(set_winners == "P2")
+  rm(set_num,set_winners)
   
   # get the number of games in the current set, if there is an uncompleted set
-  if (!arg.completed) {
-    p1.games <- as.integer(substr(scores[num.sets],1,1))
-    p2.games <- as.integer(substr(scores[num.sets],3,3))
-    p1.total.games <- p1.total.games + p1.games
-    p2.total.games <- p2.total.games + p2.games
+  if (!arg_completed) {
+    p1_games <- as_integer(substr(scores[num_sets],1,1))
+    p2_games <- as_integer(substr(scores[num_sets],3,3))
+    p1_total_games <- p1_total_games + p1_games
+    p2_total_games <- p2_total_games + p2_games
   }
   
   # determine if a tiebreak is currently happening
-  if(p1.games == 6 & p2.games == 6) {
-    tiebreak.ind <- TRUE
+  if(p1_games == 6 & p2_games == 6) {
+    tiebreak_ind <- TRUE
   } else {
-    tiebreak.ind <- FALSE
+    tiebreak_ind <- FALSE
   }
   
   # index of "-" for points
-  if (!arg.completed) {
-    dash.index <- gregexpr(pattern = "-", scores[length(scores)])[[1]]
+  if (!arg_completed) {
+    dash_index <- gregexpr(pattern = "-", scores[length(scores)])[[1]]
   
     # get the number of points in the current game, depends
-    p1.points <- substr(scores[length(scores)],1,dash.index-1)
-    p2.points <- substr(scores[length(scores)],dash.index+1,nchar(scores[length(scores)]))
+    p1_points <- substr(scores[length(scores)],1,dash_index-1)
+    p2_points <- substr(scores[length(scores)],dash_index+1,nchar(scores[length(scores)]))
   
     # if not a tiebreak then need to convert scores like 40 and 30 to integer number of points
-    if(!(tiebreak.ind)) {
-      p1.points <- switch(p1.points,
+    if(!(tiebreak_ind)) {
+      p1_points <- switch(p1_points,
                           "0" = 0,
                           "15" = 1,
                           "30" = 2,
                           "40" = 3,
                           "Ad" = 4)
-      p2.points <- switch(p2.points,
+      p2_points <- switch(p2_points,
                           "0" = 0,
                           "15" = 1,
                           "30" = 2,
                           "40" = 3,
                           "Ad" = 4)
     }
-    p1.points <- as.integer(p1.points)
-    p2.points <- as.integer(p2.points)
+    p1_points <- as_integer(p1_points)
+    p2_points <- as_integer(p2_points)
     
   }
   
-  return(list("p1.sets" = p1.sets,
-              "p2.sets" = p2.sets,
-              "p1.games" = p1.games,
-              "p2.games" = p2.games,
-              "p1.points" = p1.points,
-              "p2.points" = p2.points,
-              "tiebreak.ind" = tiebreak.ind,
-              "p1.total.games" = p1.total.games,
-              "p2.total.games" = p2.total.games,
-              "p1.total.tiebreaks" = p1.total.tiebreaks,
-              "p2.total.tiebreaks" = p2.total.tiebreaks))
+  return(list("p1_sets" = p1_sets,
+              "p2_sets" = p2_sets,
+              "p1_games" = p1_games,
+              "p2_games" = p2_games,
+              "p1_points" = p1_points,
+              "p2_points" = p2_points,
+              "tiebreak_ind" = tiebreak_ind,
+              "p1_total_games" = p1_total_games,
+              "p2_total_games" = p2_total_games,
+              "p1_total_tiebreaks" = p1_total_tiebreaks,
+              "p2_total_tiebreaks" = p2_total_tiebreaks))
   
 }

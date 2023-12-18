@@ -1,14 +1,14 @@
-snapshot <- function(arg.data,arg.date) {
+snapshot <- function(arg_data,arg_date) {
   # check if arg.data is already a data table > convert if not
-  x <- arg.data
+  x <- arg_data
   setDT(x)
   # filter tmp
-  x <- x[from_date < as.Date(arg.date) & to_date > as.Date(arg.date),]
+  x <- x[from_date < as.Date(arg_date) & to_date > as.Date(arg_date),]
   return(x)
 }
 
-elo_outcome <- function(arg.elo1, arg.elo2) {
-  x1 = arg.elo2 - arg.elo1
+elo_outcome <- function(arg_elo1, arg_elo2) {
+  x1 = arg_elo2 - arg_elo1
   x2 = x1/400
   x3 = 10^x2
   x4 = 1/(1+x3)
