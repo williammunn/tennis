@@ -110,7 +110,7 @@ z <- sample(y,size=32,replace=F)
 output <- simulate_tournament("2022-01-01",z)[[2]] # full dataset of tournament
 
 # add on player name
-player <- player.data
+player <- player_data
 output2 <- sqldf(
                 "select a.*, 
                 b.player_name as name1, 

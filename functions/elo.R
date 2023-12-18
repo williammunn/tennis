@@ -1,5 +1,4 @@
 library(dplyr);library(lubridate);library(data.table);library(sqldf)
-rm(list=ls())
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 
 # load tennis data, remove what we don't need
