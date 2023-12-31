@@ -1,46 +1,36 @@
+
 library(dplyr);library(lubridate);library(data.table);library(sqldf)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
 
 # load tennis data, remove what we don't need
 source("load_data.R")
-lapply(list(Data,match_data,player_data),setDT)
+lapply(list(match_data,player_data),setDT)
 match_data <- match_data[, .(tourney_id,tourney_date,match_num,winner_id,loser_id)]
 
 # subset of data for matches played in 2019
 elo_input_data <- match_data[year(tourney_date) %in% c(2000:2022)]
 
 # a function that computes the elo points added/subtracted from the winner/loser following one match
-elo_calculate_points <- function(arg_p1,
-                                 arg_p2,
-                                 arg_winner,
-                                 arg_p1_matches,
-                                 arg_p2_matches,
-                                 arg_prevelo_p1,
-                                 arg_prevelo_p2
+elo_calculate_points <- function(arg_winner_matches,
+                                 arg_loser_matches,
+                                 arg_winner_prevelo,
+                                 arg_loser_prevelo
                                  ) {
   # calculate the pre-match win probabilities of each player on the day of the match
-  e_p1 <- 1/(1 + 10^((arg_prevelo_p2 - arg_prevelo_p1)/400))
-  e_p2 <- 1/(1 + 10^((arg_prevelo_p1 - arg_prevelo_p2)/400))
+  e_winner <- 1/(1 + 10^((arg_loser_prevelo - arg_winner_prevelo)/400))
+  e_loser <- 1/(1 + 10^((arg_winner_prevelo - arg_loser_prevelo)/400))
   # create the k factor for the winner and loser (depends on prior number of matches)
-  k_p1 <- 250/((arg_p1_matches + 5)^0.4)
-  k_p2 <- 250/((arg_p2_matches + 5)^0.4)
-  # actual outcome for winner and loser
-  if(arg_winner == arg_p1) {
-    s_p1 <- 1
-    s_p2 <- 0
-  } else {
-    s_p1 <- 0
-    s_p2 <- 1
-  }
+  k_winner <- 250/((arg_winner_matches + 5)^0.4)
+  k_loser <- 250/((arg_loser_matches + 5)^0.4)
   # update elo for players
-  elo_p1 <- round(arg_prevelo_p1 + k_p1*(s_p1 - e_p1),0)
-  elo_p2 <- round(arg_prevelo_p2 + k_p2*(s_p2 - e_p2),0)
+  elo_winner <- round(arg_winner_prevelo + k_winner*(1 - e_winner),0)
+  elo_loser <- round(arg_loser_prevelo + k_loser*(0 - e_loser),0)
   # return new elo points of player 1 and 2 respectively
-  return(list(elo_p1,elo_p2))
+  return(list(elo_winner,elo_loser))
 }
 
 # sort data by tourney_date and match_num
-temp <- elo_input_data[order(tourney_date,tourney_id,match_num)]#[c(1:10),]
+temp <- elo_input_data[order(tourney_date,tourney_id,match_num)]
 
 # vectors for players and their current Elo ratings
 players <- unique(c(elo_input_data[['winner_id']],elo_input_data[['loser_id']]))
@@ -57,13 +47,10 @@ output <- apply(
     loser <- which(players==x[5])
     # calculate winner and loser Elo points
     points <- elo_calculate_points(
-      arg_p1 = x[4],
-      arg_p2 = x[5],
-      arg_winner = x[4],
-      arg_p1_matches = matches[winner],
-      arg_p2_matches = matches[loser],
-      arg_prevelo_p1 = elo[winner],
-      arg_prevelo_p2 = elo[loser]
+      arg_winner_matches = matches[winner],
+      arg_loser_matches = matches[loser],
+      arg_winner_prevelo = elo[winner],
+      arg_loser_prevelo = elo[loser]
     )
     # update matches count
     matches[winner] <<- matches[winner] + 1

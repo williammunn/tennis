@@ -8,9 +8,9 @@ snapshot <- function(arg_data,arg_date) {
 }
 
 elo_outcome <- function(arg_elo1, arg_elo2) {
-  x1 = arg_elo2 - arg_elo1
-  x2 = x1/400
-  x3 = 10^x2
-  x4 = 1/(1+x3)
+  x1 <- arg_elo2 - arg_elo1
+  x2 <- x1/400
+  x3 <- 10^x2
+  x4 <- 1/(1+x3)
   return(x4)
 }
