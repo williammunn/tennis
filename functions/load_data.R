@@ -1,9 +1,16 @@
-require(data.table);require(lubridate);require(dplyr)
-setwd('/Users/williammunn/Documents/Github/tennis/Data/')
+require(data.table);require(lubridate);require(dplyr);require(readr)
 
+# take data from 2000 > present
+years <- c(2000:2023)
+for (year in years) {
+  temp_data <- read_csv(url(paste0("https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_",year,".csv")))
+  assign(paste0('atp_matches_',year),temp_data)
+}
+  
 # load match data
-files <- list.files(pattern="atp_matches_[^_]*.csv")
-Data <- do.call("rbind", lapply(files, function(x) fread(x)))
+files <- ls(envir = .GlobalEnv,pattern="atp_matches_[^_]*")
+Data <- do.call("rbind", lapply(files, function(x) {as.data.table(get(x))}))
+rm(list = files)
 
 # clean data
 Data[,tourney_date := as.Date(as.character(tourney_date) ,format='%Y%m%d', origin = "1900/01/01")]
