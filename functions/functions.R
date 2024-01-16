@@ -3,7 +3,7 @@ snapshot <- function(arg_data,arg_date) {
   x <- arg_data
   setDT(x)
   # filter tmp
-  x <- x[from_date < as.Date(arg_date) & to_date > as.Date(arg_date),]
+  x <- x[from_date < as.Date(arg_date,"%d%b%Y") & to_date > as.Date(arg_date,"%d%b%Y"),]
   return(x)
 }
 

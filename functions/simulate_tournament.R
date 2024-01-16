@@ -1,28 +1,47 @@
 rm(list=ls())
 library(dplyr);library(lubridate);library(data.table);library(sqldf)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
-source("load_data.R")
 source("functions.R")
 source("elo.R")
 
+
 simulate_tournament <- function(
   tournament_date,
-  player_list
+  player_list,
+  fill_elos = FALSE
 ) {
   # ensure there are no duplicates on the players list
   if(sum(duplicated(player_list))>0) {
     stop("Remove duplicates on your player_list")
   }
   # look up elo ratings from elo_history dataset
-  players  <- as.character(snapshot(elo_history,tournament_date)$player_id)
+  snapshot_data <- snapshot(elo_history,tournament_date)[,.(player_id,elo)]
+  players  <- snapshot_data$player_id
   # ensure all players on player_list exist in the snapshot
   players_in_player_list <- players[players %in% player_list]
   if(length(player_list) != length(players_in_player_list)) {
-    stop("Not all players in your list have Elo ratings")
+    if (!fill_elos) {
+      stop("Not all players in your list have Elo ratings")
+    } else {
+      # we need to insert Elos for the players who are missing
+      players_without_elos <- player_list[!(player_list %in% players)]
+      snapshot_data <- rbind(
+        snapshot_data,
+        data.table(
+          data.frame(
+            player_id = players_without_elos,
+            elo = rep(1500,length(players_without_elos))
+          )
+        )
+      )
+      # re generate the players object, as it now needs to be larger
+      players  <- snapshot_data$player_id
+    }
   }
   # get elos in same order as players appear in player_list
-  elos <- as.numeric(snapshot(elo_history,tournament_date)$elo)[players %in% player_list]
-  players <- players_in_player_list
+  elos <- snapshot_data$elo[players %in% player_list]
+  # get players in the same order
+  players <- snapshot_data$player_id[players %in% player_list]
   # determine number of rounds
   # if there are too few players in the list (i.e. not a power of 2)
   # then the function will fill in the blanks with byes
@@ -99,30 +118,3 @@ simulate_tournament <- function(
   # output
   return(list(winners,results_df))
 }
-
-# example of running the function
-# get some players
-x <- snapshot(elo_history,"2019-06-01")
-y <- as.character(x$player_id)
-z <- sample(y,size=32,replace=F)
-
-# function
-output <- simulate_tournament("2022-01-01",z)[[2]] # full dataset of tournament
-
-# add on player name
-player <- player_data
-output2 <- sqldf(
-                "select a.*, 
-                b.player_name as name1, 
-                c.player_name as name2, 
-                d.player_name as winner_name 
-                from output a 
-                left join player b on a.player1 = b.player_id
-                left join player c on a.player2 = c.player_id
-                left join player d on a.winner = d.player_id")
-
-# how long to run function 100 times?
-#start_time <- Sys.time()
-#output <- replicate(1000,simulate_tournament("2019-06-01",z)[[1]])
-#end_time <- Sys.time()
-#end_time-start_time

@@ -104,4 +104,3 @@ elo_history[player_data, on = 'player_id', player_name := i.player_name]
 # remove working datasets
 rm(elo_input_data,temp2,temp3,final_match,output,temp,elo,matches,players)
 setwd("/Users/williammunn/Documents/Github/tennis/functions")
-print("Done!")
